@@ -1,0 +1,199 @@
+:root {
+    --bg: #ffffff;
+    --text: #333333;
+    --card-bg: #ffffff;
+    --input-bg: #ffffff;
+    --input-text: #333333;
+    --input-border: #ccc;
+    --placeholder: #aaa;
+}
+
+[data-theme="dark"] {
+    --bg: #1f1f1f;
+    --text: #f0f0f0;
+    --card-bg: #2a2a2a;
+    --input-bg: #2a2a2a;
+    --input-text: #f0f0f0;
+    --input-border: #444;
+    --placeholder: #888;
+}
+
+/* Corpo */
+body {
+    margin: 0;
+    padding: 0;
+    color: var(--text);
+    background-color: var(--bg);
+    transition: background 0.4s ease, color 0.4s ease;
+}
+
+/* Fundo do site */
+.themed-background {
+    background-image: url('https://i.ibb.co/7J9RvF0k/BACKGROUND-branco.png');
+    background-size: cover;
+    background-position: center;
+    transition: background-image 0.4s ease-in-out;
+}
+
+[data-theme="dark"] .themed-background {
+    background-image: url('https://i.ibb.co/ZMkgVrP/BACKGROUND.png');
+}
+
+/* Card */
+.form-card {
+    width: 100%;
+    max-width: 900px;
+    border-radius: 16px;
+    background-color: var(--card-bg);
+    color: var(--text);
+    padding: 24px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* Inputs */
+.form-card input,
+.form-card select,
+.form-card textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    transition: background-color 0.3s ease, color 0.3s ease, border 0.3s ease;
+}
+
+.form-card input::placeholder,
+.form-card textarea::placeholder {
+    color: var(--placeholder);
+}
+
+/* Título do formulário */
+.form-title {
+    font-size: 1.7rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+}
+
+/* Logo */
+.logo-img {
+    max-width: 240px;
+    height: auto;
+    transition: filter 0.3s ease;
+    display: block;
+    margin: 0 auto;
+}
+
+/* Botão de tema */
+.theme-toggle {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 1000;
+}
+
+#theme-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.6rem;
+    cursor: pointer;
+    color: var(--text);
+    transition: transform 0.2s ease;
+}
+
+#theme-btn:hover {
+    transform: scale(1.2);
+}
+
+/* Links com ícone */
+.link-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #0d6efd;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.link-button:hover {
+    text-decoration: underline;
+    color: #0a58ca;
+}
+
+.link-button i {
+    font-size: 0.9rem;
+}
+
+/* Responsividade extra */
+@media (max-width: 576px) {
+    .form-card {
+        padding: 16px;
+    }
+}
+
+#theme-btn {
+    font-size: 1.4rem;
+    padding: 6px 10px;
+    background-color: var(--bg);
+    border: 1px solid #666;
+    color: var(--text);
+    transition: transform 0.2s ease;
+}
+
+#theme-btn:hover {
+    transform: scale(1.15);
+}
+
+.btn-outline-danger i {
+    font-size: 0.9rem;
+}
+
+.input-group .form-control {
+    border-right: none;
+}
+
+.input-group .input-group-text {
+    background-color: var(--input-bg);
+    border-left: none;
+    color: var(--text);
+}
+
+.input-group .form-control {
+    border-right: none;
+}
+
+.input-group .input-group-text {
+    background-color: var(--input-bg);
+    border-left: none;
+    color: var(--text);
+}
+
+.modal-body {
+    background-color: #f8f9fa; /* Fundo claro */
+    color: #212529; /* Texto escuro */
+}
+
+.dark-theme .modal-body {
+    background-color: #343a40; /* Fundo escuro */
+    color: #f8f9fa; /* Texto claro */
+}
+
+#timerDisplay {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #dc3545; /* Cronômetro vermelho */
+}
+
+.form-card {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 1000px;
+  }
+  

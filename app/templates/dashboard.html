@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% block title %}Chamados TI - Detalhes{% endblock %}
+
+{% block content %}
+<h3 class="form-title text-center mb-4">
+  <i class="fa-solid fa-list-check me-2"></i> Chamados TI e Manutenção
+</h3>
+
+<div class="row">
+  <div class="col-md-6 mb-4">
+    <canvas id="graficoSetor"></canvas>
+  </div>
+  <div class="col-md-6 mb-4">
+    <canvas id="graficoTempo"></canvas>
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="row mb-4">
+  <div class="col-md-4">
+    <label for="filtro-setor" class="form-label">Filtrar por Setor</label>
+    <select id="filtro-setor" class="form-select">
+      <option value="">Todos os Setores</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label for="filtro-status" class="form-label">Filtrar por Status</label>
+    <select id="filtro-status" class="form-select">
+      <option value="">Todos os Status</option>
+      <option value="Pendente">Pendente</option>
+      <option value="Em andamento">Em andamento</option>
+      <option value="Finalizado">Finalizado</option>
+      <option value="Resolvido">Resolvido</option>
+    </select>
+  </div>
+  <div class="col-md-4">
+    <label for="filtro-busca" class="form-label">Buscar por nome, setor ou descrição</label>
+    <input type="text" id="filtro-busca" class="form-control" placeholder="Digite para buscar...">
+  </div>
+</div>
+
+<!-- Tabela com todos os dados -->
+<div class="table-responsive mb-5">
+  <table class="table table-bordered table-sm table-striped">
+    <thead class="table-dark">
+      <tr>
+        <th>Data</th>
+        <th>Nome</th>
+        <th>Setor</th>
+        <th>Descrição</th>
+        <th>Status</th>
+        <th>Tempo</th>
+        <th>Observações</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-chamados"></tbody>
+  </table>
+</div>
+
+<!-- Modal para detalhes do chamado -->
+<div class="modal fade" id="modalChamado" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-dark">Detalhes do Chamado</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-dark">
+        <div class="card mb-3 p-3 shadow-sm">
+          <h5><i class="fa fa-ticket-alt me-2"></i> Chamado</h5>
+
+          <!-- NOVO: Mostra ID do chamado -->
+          <p><strong>ID do chamado:</strong> <span id="card-id">---</span></p>
+
+          <p><strong>Nome:</strong> <span id="card-nome">---</span></p>
+          <p><strong>Setor:</strong> <span id="card-setor">---</span></p>
+          <p><strong>Descrição:</strong> <span id="card-desc">---</span></p>
+          <p><strong>Data:</strong> <span id="card-data">---</span></p>
+          <p><strong>Tempo decorrido:</strong> <span id="card-tempo">0h 0min</span></p>
+
+          <div class="mb-3">
+            <label for="card-observacao" class="form-label">Observações</label>
+            <textarea id="card-observacao" class="form-control" rows="3"></textarea>
+          </div>
+
+          <!-- Linha do tempo -->
+          <div class="timeline mt-3">
+            <div class="step" id="card-step-iniciado" onclick="atualizarStatusChamado('Pendente')">Iniciado</div>
+            <div class="step" id="card-step-andamento" onclick="atualizarStatusChamado('Em andamento')">Em andamento</div>
+            <div class="step" id="card-step-concluido" onclick="atualizarStatusChamado('Finalizado')">Concluído</div>
+          </div>
+
+          <!-- Botões -->
+          <div class="text-end mt-4">
+            <button class="btn btn-secondary me-2" data-bs-dismiss="modal">Fechar</button>
+            <button class="btn btn-success" onclick="salvarAlteracoesChamado()">Salvar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block actions %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  let chamados = [];
+  let chamadoSelecionado = null;
+  let chartSetor = null;
+  let chartTempo = null;
+
+  document.getElementById("filtro-setor").addEventListener("change", renderizarTabela);
+  document.getElementById("filtro-status").addEventListener("change", renderizarTabela);
+  document.getElementById("filtro-busca").addEventListener("input", renderizarTabela);
+
+  function calcularTempo(chamado) {
+    if (!chamado.criado_em) {
+      return { tempoStr: "0h 0min", totalMin: 0 };
+    }
+    const inicio = new Date(chamado.criado_em);
+    const fim = chamado.concluido_em ? new Date(chamado.concluido_em) : new Date();
+    const diff = fim - inicio;
+    const minutos = Math.floor(diff / 60000);
+    const horas = Math.floor(minutos / 60);
+    return {
+      tempoStr: `${horas}h ${minutos % 60}min`,
+      totalMin: minutos
+    };
+  }
+
+  async function carregarChamados() {
+    const resp = await fetch('/api/chamados');
+    chamados = await resp.json();
+    renderizarTabela();
+    gerarGraficos();
+  }
+
+  function atualizarStatusChamado(novoStatus) {
+    if (chamadoSelecionado == null) return;
+    chamados[chamadoSelecionado].status = novoStatus;
+
+    document.querySelectorAll('.timeline .step').forEach(step => step.classList.remove('active'));
+    if (novoStatus === 'Pendente')     document.getElementById('card-step-iniciado').classList.add('active');
+    if (novoStatus === 'Em andamento') document.getElementById('card-step-andamento').classList.add('active');
+    if (novoStatus === 'Finalizado')   document.getElementById('card-step-concluido').classList.add('active');
+  }
+
+  async function salvarAlteracoesChamado() {
+    if (chamadoSelecionado == null) return;
+    const chamado = chamados[chamadoSelecionado];
+
+    if ((chamado.status === 'Finalizado' || chamado.status === 'Resolvido') && !chamado.concluido_em) {
+      chamado.concluido_em = new Date().toISOString();
+    }
+
+    const obs = document.getElementById('card-observacao').value.trim() || '';
+    chamado.observacao = obs;
+
+    await fetch(`/api/chamados/${chamado.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status: chamado.status,
+        observacao: chamado.observacao
+      })
+    });
+
+    renderizarTabela();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('modalChamado'));
+    if (modal) modal.hide();
+  }
+
+  function gerarGraficos() {
+    const setores = {};
+    const tempos = [];
+
+    chamados.forEach(c => {
+      const setor = c.setor || 'Indefinido';
+      setores[setor] = (setores[setor] || 0) + 1;
+
+      if (c.status === 'Finalizado' || c.status === 'Resolvido') {
+        tempos.push(calcularTempo(c).totalMin);
+      }
+    });
+
+    if (chartSetor) chartSetor.destroy();
+    if (chartTempo) chartTempo.destroy();
+
+    const ctxSetor = document.getElementById("graficoSetor").getContext("2d");
+    chartSetor = new Chart(ctxSetor, {
+      type: 'pie',
+      data: {
+        labels: Object.keys(setores),
+        datasets: [{
+          data: Object.values(setores)
+        }]
+      },
+      options: {
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+
+    const media = tempos.length ? (tempos.reduce((a, b) => a + b, 0) / tempos.length).toFixed(2) : 0;
+    const ctxTempo = document.getElementById("graficoTempo").getContext("2d");
+    chartTempo = new Chart(ctxTempo, {
+      type: 'bar',
+      data: {
+        labels: ['Tempo médio (min)'],
+        datasets: [{
+          label: 'Minutos',
+          data: [media]
+        }]
+      },
+      options: {
+        scales: { y: { beginAtZero: true } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  function renderizarTabela() {
+    const tabela = document.getElementById("tabela-chamados");
+    tabela.innerHTML = '';
+
+    const filtroSetor = document.getElementById("filtro-setor").value.toLowerCase();
+    const filtroStatus = document.getElementById("filtro-status").value.toLowerCase();
+    const filtroBusca = document.getElementById("filtro-busca").value.toLowerCase();
+
+    chamados.forEach((c, i) => {
+      const nome = (c.nome || '').toLowerCase();
+      const setor = (c.setor || '').toLowerCase();
+      const desc  = (c.descricao || '').toLowerCase();
+      const status = (c.status || '').toLowerCase();
+
+      if (
+        (!filtroSetor || setor.includes(filtroSetor)) &&
+        (!filtroStatus || status.includes(filtroStatus)) &&
+        (!filtroBusca || nome.includes(filtroBusca) || setor.includes(filtroBusca) || desc.includes(filtroBusca))
+      ) {
+        const dataStr = c.criado_em ? new Date(c.criado_em).toLocaleString() : '';
+
+        tabela.innerHTML += `
+          <tr>
+            <td>${dataStr}</td>
+            <td>${c.nome || ''}</td>
+            <td>${c.setor || ''}</td>
+            <td>${c.descricao || ''}</td>
+            <td>${c.status || ''}</td>
+            <td>${calcularTempo(c).tempoStr}</td>
+            <td>${c.observacao || ''}</td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary" onclick="abrirDetalhes(${i})">
+                <i class="fa fa-eye"></i> Ver detalhes
+              </button>
+            </td>
+          </tr>
+        `;
+      }
+    });
+  }
+
+  function abrirDetalhes(i) {
+    chamadoSelecionado = i;
+    const c = chamados[i];
+
+    // MOSTRA O ID
+    document.getElementById('card-id').textContent = c.id || '---';
+
+    document.getElementById('card-nome').textContent = c.nome || '---';
+    document.getElementById('card-setor').textContent = c.setor || '---';
+    document.getElementById('card-desc').textContent = c.descricao || '---';
+    document.getElementById('card-data').textContent = c.criado_em
+      ? new Date(c.criado_em).toLocaleString()
+      : '---';
+    document.getElementById('card-tempo').textContent = calcularTempo(c).tempoStr;
+    document.getElementById('card-observacao').value = c.observacao || '';
+
+    document.querySelectorAll('.timeline .step').forEach(step => step.classList.remove('active'));
+    if (c.status === 'Pendente')     document.getElementById('card-step-iniciado').classList.add('active');
+    if (c.status === 'Em andamento') document.getElementById('card-step-andamento').classList.add('active');
+    if (c.status === 'Finalizado' || c.status === 'Resolvido') {
+      document.getElementById('card-step-concluido').classList.add('active');
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('modalChamado'));
+    modal.show();
+  }
+
+  carregarChamados();
+</script>
+
+<style>
+  .timeline {
+    display: flex;
+    justify-content: space-between;
+    border-top: 3px solid #ccc;
+    padding-top: 12px;
+    margin-top: 1rem;
+    cursor: pointer;
+  }
+  .timeline .step {
+    font-weight: 600;
+    position: relative;
+    text-align: center;
+    width: 33%;
+    padding-top: 20px;
+    transition: background 0.3s;
+  }
+  .timeline .step:hover {
+    background-color: #f8f9fa;
+  }
+  .timeline .step.active::before {
+    content: '✔';
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    background-color: green;
+    border-radius: 50%;
+    border: 2px solid white;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
+{% endblock %}

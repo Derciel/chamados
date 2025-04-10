@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: chamados-flask
+    env: python
+    plan: free
+    buildCommand: ""
+    startCommand: gunicorn wsgi:app
+    runtime: python
+    region: oregon
+    buildFilter:
+      paths:
+        - "**/*.py"
+        - "**/requirements.txt"
+        - ".render.yaml"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: DATABASE_URL
+        value: sqlite:////tmp/banco.db

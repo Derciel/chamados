@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Novo Chamado{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="form-title text-center mb-0">📨 Abrir Novo Chamado</h4>
+        <!-- Ajuste no blueprint -->
+        <a href="{{ url_for('routes_bp.meus_chamados_resolvidos') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-check-circle me-1"></i> Chamados Finalizados
+        </a>
+    </div>
+
+    <form method="POST">
+      <!-- Nome -->
+      <div class="mb-3">
+        <label class="form-label">Nome</label>
+        <input type="text" name="nome" class="form-control" placeholder="Digite seu nome" required>
+      </div>
+
+      <!-- Setor -->
+      <div class="mb-3">
+        <label class="form-label">Setor</label>
+        <select name="setor" class="form-select" required>
+          <option value="" disabled selected>Selecione um setor</option>
+          <option value="PCP">PCP</option>
+          <option value="Financeiro">Financeiro</option>
+          <option value="TI">TI</option>
+          <option value="Produção">Produção</option>
+          <option value="RH">RH</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Qualidade">Qualidade</option>
+          <option value="Comercial">Comercial</option>
+          <option value="Logística">Logística</option>
+          <option value="Manutenção">Manutenção</option>
+          <option value="Compras">Compras</option>
+          <option value="Arte">Arte</option>
+          <option value="Outros">Outros</option>
+        </select>
+      </div>
+
+      <!-- Descrição -->
+      <div class="mb-3">
+        <label class="form-label">Descrição do chamado</label>
+        <textarea name="descricao" class="form-control" rows="4" placeholder="Descreva o problema..." required></textarea>
+      </div>
+
+      <!-- Imagem -->
+      <div class="mb-3">
+        <label class="form-label">ANYDESK</label>
+        <input type="url" name="imagem" class="form-control" placeholder="Cole seu anydesk aqui">
+      </div>
+
+      <!-- Botão -->
+      <div class="d-grid mt-4">
+        <button type="submit" class="btn btn-primary">
+          <i class="fa-solid fa-paper-plane me-1"></i> Enviar chamado
+        </button>
+      </div>
+    </form>
+</div>
+{% endblock %}

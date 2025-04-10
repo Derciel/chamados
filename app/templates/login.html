@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<h2 class="form-title mb-3">Sistema de Chamados Nicopel - Login</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
+<form method="POST" class="text-start">
+  <div class="mb-3">
+    <label for="email" class="form-label">E-mail</label>
+    <input type="email" name="email" id="email" class="form-control" placeholder="admin@empresa.com" required>
+  </div>
+  <div class="mb-3">
+    <label for="senha" class="form-label">Senha</label>
+    <input type="password" name="senha" id="senha" class="form-control" placeholder="Senha" required>
+  </div>
+  <button type="submit" class="btn btn-primary w-100">Entrar</button>
+</form>
+{% endblock %}
+
+{% block actions %}
+<div class="text-center mt-3">
+  <!-- Ajuste o endpoint do Blueprint -->
+  <a href="{{ url_for('routes_bp.register') }}" class="link-button me-3">
+    <i class="fa-solid fa-user-plus"></i> Criar conta
+  </a>
+  <a href="{{ url_for('routes_bp.reset_password') }}" class="link-button">
+    <i class="fa-solid fa-key"></i> Esqueci a senha
+  </a>
+</div>
+{% endblock %}

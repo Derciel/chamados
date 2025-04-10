@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Cadastro{% endblock %}
+
+{% block content %}
+<h2 class="text-center mb-3">Criar Conta</h2>
+<form method="POST">
+    <!-- Email -->
+    <div class="mb-3">
+        <label for="email" class="form-label">Email:</label>
+        <input type="email" class="form-control" id="email" name="email" required>
+    </div>
+
+    <!-- Senha -->
+    <div class="mb-3">
+        <label for="senha" class="form-label">Senha:</label>
+        <input type="password" class="form-control" id="senha" name="senha" required>
+    </div>
+
+    <!-- ID do Funcionário -->
+    <div class="mb-3">
+        <label for="funcionario_id" class="form-label">ID do Funcionário:</label>
+        <input type="number" class="form-control" id="funcionario_id" name="funcionario_id" required>
+    </div>
+
+    <!-- Pergunta de segurança -->
+    <div class="mb-3">
+        <label for="security_question" class="form-label">Pergunta de segurança:</label>
+        <select name="security_question" id="security_question" class="form-select" required>
+            <option value="" disabled selected>Selecione uma pergunta</option>
+            <option value="pet">Qual o nome do seu primeiro pet?</option>
+            <option value="cidadeNatal">Qual a sua cidade natal?</option>
+            <option value="timeFavorito">Qual seu time favorito?</option>
+        </select>
+    </div>
+
+    <!-- Resposta de segurança -->
+    <div class="mb-3">
+        <label for="security_answer" class="form-label">Resposta de segurança:</label>
+        <input
+          type="text"
+          class="form-control"
+          id="security_answer"
+          name="security_answer"
+          placeholder="Escreva sua resposta"
+          required
+        >
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Cadastrar</button>
+</form>
+{% endblock %}
+
+{% block actions %}
+<div class="text-center mt-3">
+    <a href="{{ url_for('routes_bp.login') }}" class="link-button">
+        <i class="fa-solid fa-right-to-bracket"></i> Já tenho conta
+    </a>
+</div>
+{% endblock %}

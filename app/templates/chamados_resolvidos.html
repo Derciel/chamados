@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Meus Chamados Resolvidos{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0"><i class="fa-solid fa-check-circle me-2"></i> Meus Chamados Resolvidos</h2>
+                </div>
+                <div class="card-body">
+                    <div class="text-end mb-3">
+                        <a href="{{ url_for('routes_bp.dashboard') }}" class="btn btn-secondary">
+                          <i class="fa-solid fa-arrow-left me-1"></i> Voltar
+                        </a>
+                      </div>
+                      
+                    {% if chamados %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nome</th>
+                                        <th>Setor</th>
+                                        <th>Status</th>
+                                        <th>Criado Em</th>
+                                        <th>Concluído Em</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for chamado in chamados %}
+                                    <tr>
+                                        <td>{{ chamado.id }}</td>
+                                        <td>{{ chamado.nome }}</td>
+                                        <td>{{ chamado.setor }}</td>
+                                        <td>
+                                            <span class="badge bg-success">
+                                                <i class="fa-solid fa-check me-1"></i> {{ chamado.status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ chamado.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+                                        <td>{{ chamado.concluido_em.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info text-center">
+                            <i class="fa-solid fa-info-circle me-2"></i> Nenhum chamado resolvido encontrado.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

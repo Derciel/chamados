@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}App{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://i.ibb.co/Y7wWZSnC/Prancheta-5-1.png">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <style>
+        .logo-nicopel {
+            max-width: 300px;
+            height: auto;
+        }
+        .logo-container {
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Botões fixos no canto superior direito -->
+<div class="position-absolute top-0 end-0 p-3 d-flex flex-column align-items-end gap-2" style="z-index: 1000;">
+    <button id="theme-btn" class="btn btn-light rounded-circle shadow-sm">🌞</button>
+    {% if session.usuario_id %}
+    <a href="{{ url_for('routes_bp.logout') }}" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1">
+        <i class="fa-solid fa-right-from-bracket"></i> Sair
+    </a>
+    {% endif %}
+</div>
+
+<!-- Conteúdo principal -->
+<div class="container-fluid themed-background min-vh-100 d-flex justify-content-center align-items-center">
+    <div class="form-card w-100" style="max-width: 1000px;">
+        <div class="logo-container">
+            <img id="logo" src="https://i.ibb.co/zWJstk81/logo-nicopel-8.png" alt="Grupo Nicopel" class="logo-nicopel mb-3">
+        </div>
+        {% block content %}{% endblock %}
+        {% block actions %}{% endblock %}
+    </div>
+</div>
+
+<!-- SheetJS para exportação Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Script de alternância de tema + troca de logotipo -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const html = document.documentElement;
+    const bg = document.querySelector('.themed-background');
+    const btn = document.getElementById("theme-btn");
+    const logo = document.getElementById("logo");
+
+    const savedTheme = localStorage.getItem("theme") || "light";
+    applyTheme(savedTheme);
+
+    btn.addEventListener("click", function () {
+        const newTheme = html.dataset.theme === "light" ? "dark" : "light";
+        applyTheme(newTheme);
+        localStorage.setItem("theme", newTheme);
+    });
+
+    function applyTheme(theme) {
+        html.setAttribute("data-theme", theme);
+
+        if (theme === "dark") {
+            bg.style.backgroundImage = "url('https://i.ibb.co/ZMkgVrP/BACKGROUND.png')";
+            btn.textContent = "🌙";
+            btn.classList.remove("btn-light");
+            btn.classList.add("btn-dark");
+            logo.src = "https://i.ibb.co/nLkLD0f/GRUPO-NICOPEL-1.png";
+        } else {
+            bg.style.backgroundImage = "url('https://i.ibb.co/7J9RvF0k/BACKGROUND-branco.png')";
+            btn.textContent = "🌞";
+            btn.classList.remove("btn-dark");
+            btn.classList.add("btn-light");
+            logo.src = "https://i.ibb.co/zWJstk81/logo-nicopel-8.png";
+        }
+    }
+});
+</script>
+
+<!-- Script de notificações push -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
+
+    function exibirNotificacao(titulo, texto) {
+        if (Notification.permission === "granted") {
+            new Notification(titulo, { body: texto });
+        }
+    }
+
+    setInterval(async function() {
+        try {
+            const resp = await fetch("/api/notificacoes");
+            const data = await resp.json();
+
+            for (const ch of data) {
+                exibirNotificacao("Chamado finalizado", `O chamado #${ch.id} foi finalizado!`);
+                await fetch(`/api/notificacoes/${ch.id}/marcar`, { method: "POST" });
+            }
+        } catch (err) {
+            console.error("Erro ao buscar notificações:", err);
+        }
+    }, 10000);
+});
+</script>
+
+</body>
+</html>
