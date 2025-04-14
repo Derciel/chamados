@@ -3,3 +3,4 @@ Flask-Bcrypt
 Flask-SQLAlchemy
 gunicorn
 requests
+psycopg2
