@@ -3,17 +3,17 @@ services:
     name: chamados-flask
     env: python
     plan: free
+    region: oregon
+    runtime: python
     buildCommand: ""
     startCommand: gunicorn wsgi:app
-    runtime: python
-    region: oregon
     buildFilter:
       paths:
         - "**/*.py"
         - "**/requirements.txt"
         - ".render.yaml"
     envVars:
-      - key: FLASK_ENV
-        value: production
+      - key: RENDER
+        value: true
       - key: DATABASE_URL
-        value: sqlite:////tmp/banco.db
+        value: postgresql://meubancochamados_user:iM3J1cZivInPg6g6j02oUeWEyiRdQLSX@dpg-cvulb449c44c73bonda0-a/meubancochamados  # <-- Substitua aqui

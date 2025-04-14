@@ -9,11 +9,13 @@ bcrypt = Bcrypt()
 def create_app():
     app = Flask(__name__)
 
-    # Detecta se está rodando no Render (produção) ou local
     is_production = os.environ.get("RENDER") == "true"
 
     if is_production:
-        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
+        db_url = os.environ.get("DATABASE_URL")
+        if not db_url:
+            raise ValueError("⚠️ A variável DATABASE_URL não está configurada!")
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_url
     else:
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///banco.db'
 
