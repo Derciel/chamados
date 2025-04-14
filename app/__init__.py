@@ -13,12 +13,12 @@ def create_app():
     is_production = os.environ.get("RENDER") == "true"
 
     if is_production:
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/banco.db'
+        app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
     else:
         app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///banco.db'
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SECRET_KEY'] = 'chave-secreta'
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "chave-secreta")
 
     db.init_app(app)
     bcrypt.init_app(app)
