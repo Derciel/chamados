@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify
 chatbot_bp = Blueprint('chatbot_bp', __name__)
 
 HUGGING_FACE_TOKEN = os.getenv("HUGGING_FACE_TOKEN")
-MODEL_URL = "https://api-inference.huggingface.co/models/google/flan-t5-base"
+MODEL_URL = "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct"
 
 headers = {
     "Authorization": f"Bearer {HUGGING_FACE_TOKEN}",
