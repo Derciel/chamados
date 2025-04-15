@@ -25,8 +25,12 @@ def create_app():
     db.init_app(app)
     bcrypt.init_app(app)
 
+    # Blueprints
     from app.routes import bp as routes_bp
+    from app.routes.spotify import spotify_bp
+
     app.register_blueprint(routes_bp)
+    app.register_blueprint(spotify_bp)
 
     with app.app_context():
         db.create_all()

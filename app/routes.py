@@ -7,6 +7,7 @@ from .models import Usuario, Chamado
 from sqlalchemy.sql import func
 
 bp = Blueprint('routes_bp', __name__)
+spotify_bp = Blueprint('spotify_bp', __name__)
 
 @bp.route('/')
 def home():
@@ -338,3 +339,7 @@ def marcar_notificacao(id):
     chamado.notificado = True
     db.session.commit()
     return jsonify({"mensagem": "Notificação marcada"}), 200
+
+@bp.route("/spotify")
+def spotify():
+    return render_template("spotify.html")
