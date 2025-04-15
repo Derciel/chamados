@@ -28,9 +28,11 @@ def create_app():
     # ✅ Blueprints
     from app.routes import bp as routes_bp
     from app.spotify_routes import spotify_bp
+    from app.chatbot_routes import chatbot_bp
 
     app.register_blueprint(routes_bp)
     app.register_blueprint(spotify_bp)
+    app.register_blueprint(chatbot_bp)
 
     with app.app_context():
         db.create_all()

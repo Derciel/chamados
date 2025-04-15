@@ -61,4 +61,96 @@
       </div>
     </form>
 </div>
+
+<!-- Chatbot Flutuante -->
+<style>
+  #chatbot-box {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    max-height: 500px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-size: 14px;
+  }
+
+  #chatbot-header {
+    background: #007bff;
+    color: white;
+    padding: 10px;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  #chatbot-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+  }
+
+  #chatbot-input {
+    display: flex;
+    border-top: 1px solid #ccc;
+  }
+
+  #chatbot-input input {
+    flex: 1;
+    border: none;
+    padding: 10px;
+    outline: none;
+  }
+
+  #chatbot-input button {
+    border: none;
+    background: #007bff;
+    color: white;
+    padding: 10px 15px;
+    cursor: pointer;
+  }
+</style>
+
+<div id="chatbot-box">
+  <div id="chatbot-header">🤖 Ajuda de TI</div>
+  <div id="chatbot-messages"></div>
+  <div id="chatbot-input">
+    <input type="text" id="chatbot-question" placeholder="Digite sua dúvida..." />
+    <button onclick="enviarChat()">⏎</button>
+  </div>
+</div>
+
+<script>
+  async function enviarChat() {
+    const input = document.getElementById("chatbot-question");
+    const messages = document.getElementById("chatbot-messages");
+
+    const pergunta = input.value.trim();
+    if (!pergunta) return;
+
+    messages.innerHTML += `<div><strong>Você:</strong> ${pergunta}</div>`;
+    input.value = "";
+    messages.innerHTML += `<div><em>Respondendo...</em></div>`;
+    messages.scrollTop = messages.scrollHeight;
+
+    const res = await fetch("/chatbot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: pergunta })
+    });
+
+    const data = await res.json();
+    const resposta = data.answer || data.error || "Erro ao responder.";
+
+    messages.innerHTML += `<div><strong>Bot:</strong> ${resposta}</div>`;
+    messages.scrollTop = messages.scrollHeight;
+  }
+</script>
+
+
 {% endblock %}

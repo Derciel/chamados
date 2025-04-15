@@ -12,8 +12,3 @@ services:
         - "**/*.py"
         - "**/requirements.txt"
         - ".render.yaml"
-    envVars:
-      - key: RENDER
-        value: true
-      - key: DATABASE_URL
-        value: postgresql://meubancochamados_user:iM3J1cZivInPg6g6j02oUeWEyiRdQLSX@dpg-cvulb449c44c73bonda0-a/meubancochamados  # <-- Substitua aqui
