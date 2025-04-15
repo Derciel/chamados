@@ -5,7 +5,7 @@ from flask import Blueprint, request, jsonify
 chatbot_bp = Blueprint('chatbot_bp', __name__)
 
 HUGGING_FACE_TOKEN = os.getenv("HUGGING_FACE_TOKEN")
-MODEL_URL = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.1"
+MODEL_URL = "https://api-inference.huggingface.co/models/google/flan-t5-base"
 
 headers = {
     "Authorization": f"Bearer {HUGGING_FACE_TOKEN}",
@@ -18,15 +18,13 @@ def chatbot():
     if not user_input:
         return jsonify({"error": "Pergunta vazia."}), 400
 
-    # Prompt formatado corretamente para o Mistral-7B-Instruct
-    prompt = f"<s>[INST] Responda de forma clara e objetiva para dúvidas de TI: {user_input} [/INST]</s>"
+    prompt = f"Responda de forma clara e objetiva uma dúvida de TI: {user_input}"
 
     payload = {
         "inputs": prompt,
         "parameters": {
-            "max_new_tokens": 256,
-            "temperature": 0.7,
-            "do_sample": True
+            "max_new_tokens": 128,
+            "temperature": 0.7
         }
     }
 
@@ -34,7 +32,7 @@ def chatbot():
         response = requests.post(MODEL_URL, headers=headers, json=payload)
         if response.status_code == 200:
             output = response.json()
-            resposta = output[0]["generated_text"]
+            resposta = output[0]["generated_text"] if isinstance(output, list) else output.get("generated_text", "Erro")
             return jsonify({"answer": resposta})
         else:
             return jsonify({
