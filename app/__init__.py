@@ -27,7 +27,7 @@ def create_app():
 
     # ✅ Blueprints
     from app.routes import bp as routes_bp
-    from app.routes.spotify import spotify_bp
+    from app.spotify_routes import spotify_bp
 
     app.register_blueprint(routes_bp)
     app.register_blueprint(spotify_bp)
