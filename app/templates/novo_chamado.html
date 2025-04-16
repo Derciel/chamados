@@ -63,10 +63,26 @@
 </div>
 
 <!-- Chatbot Flutuante -->
+<!-- Chatbot com botão recolher -->
 <style>
-  #chatbot-box {
+  #chatbot-toggle {
     position: fixed;
     bottom: 20px;
+    right: 20px;
+    z-index: 10000;
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(0,0,0,0.15);
+  }
+
+  #chatbot-box {
+    position: fixed;
+    bottom: 70px;
     right: 20px;
     width: 320px;
     max-height: 500px;
@@ -75,7 +91,7 @@
     border-radius: 12px;
     box-shadow: 0 0 12px rgba(0,0,0,0.1);
     z-index: 9999;
-    display: flex;
+    display: none;
     flex-direction: column;
     overflow: hidden;
     font-size: 14px;
@@ -116,8 +132,10 @@
   }
 </style>
 
+<button id="chatbot-toggle" onclick="toggleChatbot()">💬 Ajuda</button>
+
 <div id="chatbot-box">
-  <div id="chatbot-header">🤖 Ajuda de TI</div>
+  <div id="chatbot-header">🤖 Ajuda com TI (LLaMA)</div>
   <div id="chatbot-messages"></div>
   <div id="chatbot-input">
     <input type="text" id="chatbot-question" placeholder="Digite sua dúvida..." />
@@ -126,6 +144,11 @@
 </div>
 
 <script>
+  function toggleChatbot() {
+    const box = document.getElementById("chatbot-box");
+    box.style.display = box.style.display === "flex" ? "none" : "flex";
+  }
+
   async function enviarChat() {
     const input = document.getElementById("chatbot-question");
     const messages = document.getElementById("chatbot-messages");
@@ -138,19 +161,23 @@
     messages.innerHTML += `<div><em>Respondendo...</em></div>`;
     messages.scrollTop = messages.scrollHeight;
 
-    const res = await fetch("/chatbot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: pergunta })
-    });
+    try {
+      const res = await fetch("http://localhost:5000/chatbot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: pergunta })
+      });
 
-    const data = await res.json();
-    const resposta = data.answer || data.error || "Erro ao responder.";
-
-    messages.innerHTML += `<div><strong>Bot:</strong> ${resposta}</div>`;
-    messages.scrollTop = messages.scrollHeight;
+      const data = await res.json();
+      const resposta = data.answer || data.error || "Erro na resposta.";
+      messages.innerHTML += `<div><strong>LLaMA:</strong> ${resposta}</div>`;
+      messages.scrollTop = messages.scrollHeight;
+    } catch (err) {
+      messages.innerHTML += `<div><strong>Erro:</strong> Falha na requisição.</div>`;
+    }
   }
 </script>
+
 
 
 {% endblock %}
