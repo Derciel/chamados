@@ -4,3 +4,8 @@ Flask-SQLAlchemy
 gunicorn
 requests
 psycopg2
+requests
+flask-cors
+llama-cpp-python
+pyngrok
+python-dotenv
