@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from llama_bot import gerar_resposta
+from app.llama_bot import gerar_resposta
 
 chatbot_bp = Blueprint('chatbot_bp', __name__)
 
