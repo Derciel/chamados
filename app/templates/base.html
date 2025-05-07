@@ -18,46 +18,38 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <style>
-        /* Logos para temas claros e escuros */
-        .logo-light { display: block; }
-        .logo-dark  { display: none; }
+        /* Variáveis de cor de texto por tema */
+        html[data-theme="light"] { --text-color: #212529; --bg-url: url('https://i.ibb.co/7J9RvF0k/BACKGROUND-branco.png'); }
+        html[data-theme="dark"]  { --text-color: #f8f9fa; --bg-url: url('https://i.ibb.co/ZMkgVrP/BACKGROUND.png'); }
 
-        /* Background responsivo */
+        /* Aplica cor de texto globalmente */
+        body, .form-card, label, .btn, a, input::placeholder {
+            color: var(--text-color) !important;
+        }
+
+        /* Themed background */
         .themed-background {
             background-size: cover;
             background-position: center;
             background-image: var(--bg-url);
         }
 
+        /* Logos para temas claros e escuros */
+        .logo-light, .logo-dark { max-width: 200px; height: auto; display: none; }
+        html[data-theme="light"] .logo-light { display: block; }
+        html[data-theme="dark"]  .logo-dark  { display: block; }
+
         /* Ícones de tema */
-        .theme-icon { font-size: 1.2rem; }
-        .theme-icon-light,
-        .theme-icon-dark { display: none; }
-
-        /* Tema claro */
-        html[data-theme="light"] {
-            --bg-url: url('https://i.ibb.co/7J9RvF0k/BACKGROUND-branco.png');
-        }
-        html[data-theme="light"] .logo-light          { display: block; }
-        html[data-theme="light"] .logo-dark           { display: none; }
-        html[data-theme="light"] .theme-icon-light    { display: inline; }
-        html[data-theme="light"] .theme-icon-dark     { display: none; }
-
-        /* Tema escuro */
-        html[data-theme="dark"] {
-            --bg-url: url('https://i.ibb.co/ZMkgVrP/BACKGROUND.png');
-        }
-        html[data-theme="dark"] .logo-light           { display: none; }
-        html[data-theme="dark"] .logo-dark            { display: block; }
-        html[data-theme="dark"] .theme-icon-light     { display: none; }
-        html[data-theme="dark"] .theme-icon-dark      { display: inline; }
+        .theme-icon { font-size: 1.2rem; display: none; }
+        html[data-theme="light"] .theme-icon-light { display: inline; }
+        html[data-theme="dark"]  .theme-icon-dark  { display: inline; }
     </style>
 </head>
 <body>
 
 <!-- Botões fixos no canto superior direito -->
 <div class="position-absolute top-0 end-0 p-3 d-flex flex-column align-items-end gap-2" style="z-index: 1000;">
-    <button id="theme-btn" class="btn rounded-circle shadow-sm">
+    <button id="theme-btn" class="btn rounded-circle shadow-sm bg-transparent border-0">
         <i class="fa-solid fa-sun theme-icon theme-icon-light"></i>
         <i class="fa-solid fa-moon theme-icon theme-icon-dark"></i>
     </button>
@@ -70,10 +62,10 @@
 
 <!-- Conteúdo principal -->
 <div class="container-fluid themed-background min-vh-100 d-flex justify-content-center align-items-center">
-    <div class="form-card w-100" style="max-width: 1000px;">
-        <div class="logo-container text-center mb-3">
-            <img src="https://i.ibb.co/zWJstk81/logo-nicopel-8.png" alt="Logo Nicopel Light" class="logo-nicopel logo-light">
-            <img src="https://i.ibb.co/nLkLD0f/GRUPO-NICOPEL-1.png" alt="Logo Nicopel Dark" class="logo-nicopel logo-dark">
+    <div class="form-card w-100 p-4 rounded shadow" style="max-width: 420px;">
+        <div class="logo-container text-center mb-4">
+            <img src="https://i.ibb.co/zWJstk81/logo-nicopel-8.png" alt="Logo Nicopel Light" class="logo-light">
+            <img src="https://i.ibb.co/nLkLD0f/GRUPO-NICOPEL-1.png" alt="Logo Nicopel Dark" class="logo-dark">
         </div>
 
         {% block content %}{% endblock %}
