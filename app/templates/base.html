@@ -35,7 +35,7 @@
         /* Fundo da página */
         .themed-background {
             background-image: var(--bg-url);
-            background-size: auto 100%;
+            background-size: auto;
             background-repeat: no-repeat;
             background-position: center;
         }
@@ -71,8 +71,10 @@
             height: auto;
             display: none;
         }
+        /* Light theme: white background, use white-background logo */
         html[data-theme="light"]  .logo-light { display: block; }
         html[data-theme="light"]  .logo-dark  { display: none; }
+        /* Dark theme: black background, use black-background logo */
         html[data-theme="dark"]   .logo-light { display: none; }
         html[data-theme="dark"]   .logo-dark  { display: block; }
 
@@ -101,10 +103,10 @@
 <div class="container-fluid themed-background min-vh-100 d-flex justify-content-center align-items-center">
     <div class="form-card w-100 p-3 rounded shadow" style="max-width: 360px;">
         <div class="logo-container text-center mb-4">
-            <!-- Logo preta para fundo branco (light) -->
-            <img src="https://i.ibb.co/nLkLD0f/GRUPO-NICOPEL-1.png" alt="Logo Nicopel Black" class="logo-light">
-            <!-- Logo branca para fundo escuro (dark) -->
-            <img src="https://i.ibb.co/zWJstk81/logo-nicopel-8.png" alt="Logo Nicopel White" class="logo-dark">
+            <!-- Light: white background, show white-background logo -->
+            <img src="https://i.ibb.co/zWJstk81/logo-nicopel-8.png" alt="Logo Nicopel Light" class="logo-light">
+            <!-- Dark: black background, show black-background logo -->
+            <img src="https://i.ibb.co/nLkLD0f/GRUPO-NICOPEL-1.png" alt="Logo Nicopel Dark" class="logo-dark">
         </div>
 
         {% block content %}{% endblock %}
