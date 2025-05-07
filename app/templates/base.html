@@ -18,16 +18,29 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <style>
-        /* Variáveis de cor de texto por tema */
-        html[data-theme="light"] { --text-color: #212529; --bg-url: url('https://i.ibb.co/7J9RvF0k/BACKGROUND-branco.png'); }
-        html[data-theme="dark"]  { --text-color: #f8f9fa; --bg-url: url('https://i.ibb.co/ZMkgVrP/BACKGROUND.png'); }
-
-        /* Aplica cor de texto globalmente */
-        body, .form-card, label, .btn, a, input::placeholder {
-            color: var(--text-color) !important;
+        /* Definição de cores e background por tema */
+        html[data-theme="light"] {
+            --text-color: #212529;
+            --bg-url: url('https://i.ibb.co/7J9RvF0k/BACKGROUND-branco.png');
+        }
+        html[data-theme="dark"] {
+            --text-color: #f8f9fa;
+            --bg-url: url('https://i.ibb.co/ZMkgVrP/BACKGROUND.png');
         }
 
-        /* Themed background */
+        /* Aplica cor de texto a todo conteúdo do card */
+        .form-card,
+        .form-card * {
+            color: var(--text-color) !important;
+        }
+        /* Placeholder também escuro/claro */
+        input::placeholder,
+        textarea::placeholder {
+            color: var(--text-color) !important;
+            opacity: 0.6;
+        }
+
+        /* Background responsivo */
         .themed-background {
             background-size: cover;
             background-position: center;
@@ -35,14 +48,18 @@
         }
 
         /* Logos para temas claros e escuros */
-        .logo-light, .logo-dark { max-width: 200px; height: auto; display: none; }
-        html[data-theme="light"] .logo-light { display: block; }
-        html[data-theme="dark"]  .logo-dark  { display: block; }
+        .logo-light, .logo-dark {
+            max-width: 200px;
+            height: auto;
+            display: none;
+        }
+        html[data-theme="light"]  .logo-light { display: block; }
+        html[data-theme="dark"]   .logo-dark  { display: block; }
 
         /* Ícones de tema */
         .theme-icon { font-size: 1.2rem; display: none; }
-        html[data-theme="light"] .theme-icon-light { display: inline; }
-        html[data-theme="dark"]  .theme-icon-dark  { display: inline; }
+        html[data-theme="light"]  .theme-icon-light { display: inline; }
+        html[data-theme="dark"]   .theme-icon-dark  { display: inline; }
     </style>
 </head>
 <body>
@@ -62,10 +79,12 @@
 
 <!-- Conteúdo principal -->
 <div class="container-fluid themed-background min-vh-100 d-flex justify-content-center align-items-center">
-    <div class="form-card w-100 p-4 rounded shadow" style="max-width: 420px;">
+    <div class="form-card w-100 p-4 rounded shadow" style="max-width: 420px; background-color: rgba(255,255,255,0.85);">
         <div class="logo-container text-center mb-4">
-            <img src="https://i.ibb.co/zWJstk81/logo-nicopel-8.png" alt="Logo Nicopel Light" class="logo-light">
-            <img src="https://i.ibb.co/nLkLD0f/GRUPO-NICOPEL-1.png" alt="Logo Nicopel Dark" class="logo-dark">
+            <!-- Logo clara para tema claro -->
+            <img src="https://i.ibb.co/nLkLD0f/GRUPO-NICOPEL-1.png" alt="Logo Nicopel Light" class="logo-light">
+            <!-- Logo escura para tema escuro -->
+            <img src="https://i.ibb.co/zWJstk81/logo-nicopel-8.png" alt="Logo Nicopel Dark" class="logo-dark">
         </div>
 
         {% block content %}{% endblock %}
