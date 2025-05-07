@@ -17,13 +17,13 @@
 
 <!-- Filtros -->
 <div class="row mb-4">
-  <div class="col-md-4">
+  <div class="col-md-3">
     <label for="filtro-setor" class="form-label">Filtrar por Setor</label>
     <select id="filtro-setor" class="form-select">
       <option value="">Todos os Setores</option>
     </select>
   </div>
-  <div class="col-md-4">
+  <div class="col-md-3">
     <label for="filtro-status" class="form-label">Filtrar por Status</label>
     <select id="filtro-status" class="form-select">
       <option value="">Todos os Status</option>
@@ -33,9 +33,18 @@
       <option value="Resolvido">Resolvido</option>
     </select>
   </div>
-  <div class="col-md-4">
-    <label for="filtro-busca" class="form-label">Buscar por nome, setor ou descrição</label>
-    <input type="text" id="filtro-busca" class="form-control" placeholder="Digite para buscar...">
+  <div class="col-md-3">
+    <label for="filtro-prioridade" class="form-label">Filtrar por Prioridade</label>
+    <select id="filtro-prioridade" class="form-select">
+      <option value="">Todas</option>
+      <option value="Baixa">Baixa</option>
+      <option value="Média">Média</option>
+      <option value="Alta">Alta</option>
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label for="filtro-busca" class="form-label">Buscar</label>
+    <input type="text" id="filtro-busca" class="form-control" placeholder="Nome, setor, descrição...">
   </div>
 </div>
 
@@ -47,9 +56,10 @@
         <th>Data</th>
         <th>Nome</th>
         <th>Setor</th>
+        <th>Prioridade</th>
         <th>Descrição</th>
         <th>Status</th>
-        <th>Tempo</th>
+        <th>Tempo (min)</th>
         <th>Observações</th>
         <th>Ações</th>
       </tr>
@@ -70,14 +80,20 @@
         <div class="card mb-3 p-3 shadow-sm">
           <h5><i class="fa fa-ticket-alt me-2"></i> Chamado</h5>
 
-          <!-- NOVO: Mostra ID do chamado -->
           <p><strong>ID do chamado:</strong> <span id="card-id">---</span></p>
-
           <p><strong>Nome:</strong> <span id="card-nome">---</span></p>
           <p><strong>Setor:</strong> <span id="card-setor">---</span></p>
+          <p>
+            <strong>Prioridade:</strong>
+            <select id="card-prioridade-select" class="form-select form-select-sm" style="width:auto; display:inline-block;">
+              <option value="Baixa">Baixa</option>
+              <option value="Média">Média</option>
+              <option value="Alta">Alta</option>
+            </select>
+          </p>
           <p><strong>Descrição:</strong> <span id="card-desc">---</span></p>
           <p><strong>Data:</strong> <span id="card-data">---</span></p>
-          <p><strong>Tempo decorrido:</strong> <span id="card-tempo">0h 0min</span></p>
+          <p><strong>Tempo decorrido:</strong> <span id="card-tempo">0 min</span></p>
 
           <div class="mb-3">
             <label for="card-observacao" class="form-label">Observações</label>
@@ -111,21 +127,25 @@
   let chartSetor = null;
   let chartTempo = null;
 
-  document.getElementById("filtro-setor").addEventListener("change", renderizarTabela);
-  document.getElementById("filtro-status").addEventListener("change", renderizarTabela);
+  // Listeners de filtros
+  ['filtro-setor','filtro-status','filtro-prioridade'].forEach(id => {
+    document.getElementById(id).addEventListener("change", renderizarTabela);
+  });
   document.getElementById("filtro-busca").addEventListener("input", renderizarTabela);
 
+  // Calcula tempo em minutos e pausa se concluído
   function calcularTempo(chamado) {
     if (!chamado.criado_em) {
-      return { tempoStr: "0h 0min", totalMin: 0 };
+      return { tempoStr: "0 min", totalMin: 0 };
     }
     const inicio = new Date(chamado.criado_em);
-    const fim = chamado.concluido_em ? new Date(chamado.concluido_em) : new Date();
-    const diff = fim - inicio;
-    const minutos = Math.floor(diff / 60000);
-    const horas = Math.floor(minutos / 60);
+    const fim = chamado.concluido_em
+      ? new Date(chamado.concluido_em)
+      : new Date();
+    const diffMs = fim - inicio;
+    const minutos = Math.floor(diffMs / 60000);
     return {
-      tempoStr: `${horas}h ${minutos % 60}min`,
+      tempoStr: `${minutos} min`,
       totalMin: minutos
     };
   }
@@ -140,8 +160,7 @@
   function atualizarStatusChamado(novoStatus) {
     if (chamadoSelecionado == null) return;
     chamados[chamadoSelecionado].status = novoStatus;
-
-    document.querySelectorAll('.timeline .step').forEach(step => step.classList.remove('active'));
+    document.querySelectorAll('.timeline .step').forEach(s => s.classList.remove('active'));
     if (novoStatus === 'Pendente')     document.getElementById('card-step-iniciado').classList.add('active');
     if (novoStatus === 'Em andamento') document.getElementById('card-step-andamento').classList.add('active');
     if (novoStatus === 'Finalizado')   document.getElementById('card-step-concluido').classList.add('active');
@@ -151,36 +170,37 @@
     if (chamadoSelecionado == null) return;
     const chamado = chamados[chamadoSelecionado];
 
+    // Define concluded_em apenas na primeira finalização
     if ((chamado.status === 'Finalizado' || chamado.status === 'Resolvido') && !chamado.concluido_em) {
       chamado.concluido_em = new Date().toISOString();
     }
 
-    const obs = document.getElementById('card-observacao').value.trim() || '';
-    chamado.observacao = obs;
+    // Atualiza observação e prioridade
+    chamado.observacao = document.getElementById('card-observacao').value.trim();
+    chamado.prioridade = document.getElementById('card-prioridade-select').value;
 
+    // Envia ao backend
     await fetch(`/api/chamados/${chamado.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         status: chamado.status,
-        observacao: chamado.observacao
+        observacao: chamado.observacao,
+        prioridade: chamado.prioridade
       })
     });
 
     renderizarTabela();
-    const modal = bootstrap.Modal.getInstance(document.getElementById('modalChamado'));
-    if (modal) modal.hide();
+    bootstrap.Modal.getInstance(document.getElementById('modalChamado')).hide();
   }
 
   function gerarGraficos() {
-    const setores = {};
-    const tempos = [];
+    const setores = {}, tempos = [];
 
     chamados.forEach(c => {
-      const setor = c.setor || 'Indefinido';
-      setores[setor] = (setores[setor] || 0) + 1;
-
-      if (c.status === 'Finalizado' || c.status === 'Resolvido') {
+      const st = c.setor || 'Indefinido';
+      setores[st] = (setores[st]||0)+1;
+      if (['Finalizado','Resolvido'].includes(c.status)) {
         tempos.push(calcularTempo(c).totalMin);
       }
     });
@@ -188,30 +208,23 @@
     if (chartSetor) chartSetor.destroy();
     if (chartTempo) chartTempo.destroy();
 
-    const ctxSetor = document.getElementById("graficoSetor").getContext("2d");
-    chartSetor = new Chart(ctxSetor, {
+    chartSetor = new Chart(document.getElementById("graficoSetor").getContext("2d"), {
       type: 'pie',
       data: {
         labels: Object.keys(setores),
-        datasets: [{
-          data: Object.values(setores)
-        }]
+        datasets: [{ data: Object.values(setores) }]
       },
-      options: {
-        plugins: { legend: { position: 'bottom' } }
-      }
+      options: { plugins: { legend: { position: 'bottom' } } }
     });
 
-    const media = tempos.length ? (tempos.reduce((a, b) => a + b, 0) / tempos.length).toFixed(2) : 0;
-    const ctxTempo = document.getElementById("graficoTempo").getContext("2d");
-    chartTempo = new Chart(ctxTempo, {
+    const media = tempos.length
+      ? (tempos.reduce((a,b)=>a+b,0)/tempos.length).toFixed(2)
+      : 0;
+    chartTempo = new Chart(document.getElementById("graficoTempo").getContext("2d"), {
       type: 'bar',
       data: {
         labels: ['Tempo médio (min)'],
-        datasets: [{
-          label: 'Minutos',
-          data: [media]
-        }]
+        datasets: [{ label: 'Minutos', data: [media] }]
       },
       options: {
         scales: { y: { beginAtZero: true } },
@@ -224,32 +237,35 @@
     const tabela = document.getElementById("tabela-chamados");
     tabela.innerHTML = '';
 
-    const filtroSetor = document.getElementById("filtro-setor").value.toLowerCase();
-    const filtroStatus = document.getElementById("filtro-status").value.toLowerCase();
-    const filtroBusca = document.getElementById("filtro-busca").value.toLowerCase();
+    const fs = document.getElementById("filtro-setor").value.toLowerCase();
+    const fst = document.getElementById("filtro-status").value.toLowerCase();
+    const fp = document.getElementById("filtro-prioridade").value.toLowerCase();
+    const fb = document.getElementById("filtro-busca").value.toLowerCase();
 
     chamados.forEach((c, i) => {
-      const nome = (c.nome || '').toLowerCase();
-      const setor = (c.setor || '').toLowerCase();
-      const desc  = (c.descricao || '').toLowerCase();
-      const status = (c.status || '').toLowerCase();
+      const nome = (c.nome||'').toLowerCase();
+      const setor = (c.setor||'').toLowerCase();
+      const status = (c.status||'').toLowerCase();
+      const prio = (c.prioridade||'').toLowerCase();
+      const desc = (c.descricao||'').toLowerCase();
 
       if (
-        (!filtroSetor || setor.includes(filtroSetor)) &&
-        (!filtroStatus || status.includes(filtroStatus)) &&
-        (!filtroBusca || nome.includes(filtroBusca) || setor.includes(filtroBusca) || desc.includes(filtroBusca))
+        (!fs || setor.includes(fs)) &&
+        (!fst || status.includes(fst)) &&
+        (!fp || prio.includes(fp)) &&
+        (!fb || nome.includes(fb) || setor.includes(fb) || desc.includes(fb))
       ) {
         const dataStr = c.criado_em ? new Date(c.criado_em).toLocaleString() : '';
-
         tabela.innerHTML += `
           <tr>
             <td>${dataStr}</td>
-            <td>${c.nome || ''}</td>
-            <td>${c.setor || ''}</td>
-            <td>${c.descricao || ''}</td>
-            <td>${c.status || ''}</td>
+            <td>${c.nome||''}</td>
+            <td>${c.setor||''}</td>
+            <td>${c.prioridade||''}</td>
+            <td>${c.descricao||''}</td>
+            <td>${c.status||''}</td>
             <td>${calcularTempo(c).tempoStr}</td>
-            <td>${c.observacao || ''}</td>
+            <td>${c.observacao||''}</td>
             <td>
               <button class="btn btn-sm btn-outline-primary" onclick="abrirDetalhes(${i})">
                 <i class="fa fa-eye"></i> Ver detalhes
@@ -265,27 +281,23 @@
     chamadoSelecionado = i;
     const c = chamados[i];
 
-    // MOSTRA O ID
-    document.getElementById('card-id').textContent = c.id || '---';
-
-    document.getElementById('card-nome').textContent = c.nome || '---';
-    document.getElementById('card-setor').textContent = c.setor || '---';
-    document.getElementById('card-desc').textContent = c.descricao || '---';
+    document.getElementById('card-id').textContent = c.id||'---';
+    document.getElementById('card-nome').textContent = c.nome||'---';
+    document.getElementById('card-setor').textContent = c.setor||'---';
+    document.getElementById('card-prioridade-select').value = c.prioridade||'Baixa';
+    document.getElementById('card-desc').textContent = c.descricao||'---';
     document.getElementById('card-data').textContent = c.criado_em
-      ? new Date(c.criado_em).toLocaleString()
-      : '---';
+      ? new Date(c.criado_em).toLocaleString() : '---';
     document.getElementById('card-tempo').textContent = calcularTempo(c).tempoStr;
-    document.getElementById('card-observacao').value = c.observacao || '';
+    document.getElementById('card-observacao').value = c.observacao||'';
 
-    document.querySelectorAll('.timeline .step').forEach(step => step.classList.remove('active'));
-    if (c.status === 'Pendente')     document.getElementById('card-step-iniciado').classList.add('active');
-    if (c.status === 'Em andamento') document.getElementById('card-step-andamento').classList.add('active');
-    if (c.status === 'Finalizado' || c.status === 'Resolvido') {
+    document.querySelectorAll('.timeline .step').forEach(s => s.classList.remove('active'));
+    if (c.status==='Pendente')     document.getElementById('card-step-iniciado').classList.add('active');
+    if (c.status==='Em andamento') document.getElementById('card-step-andamento').classList.add('active');
+    if (['Finalizado','Resolvido'].includes(c.status))
       document.getElementById('card-step-concluido').classList.add('active');
-    }
 
-    const modal = new bootstrap.Modal(document.getElementById('modalChamado'));
-    modal.show();
+    new bootstrap.Modal(document.getElementById('modalChamado')).show();
   }
 
   carregarChamados();
