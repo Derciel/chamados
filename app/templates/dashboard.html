@@ -135,15 +135,13 @@
 
   // Calcula tempo em minutos e pausa se concluído
   function calcularTempo(chamado) {
-    if (!chamado.criado_em) {
-      return { tempoStr: "0 min", totalMin: 0 };
+    // só calcula se já tiver data de conclusão
+    if (!chamado.criado_em || !chamado.concluido_em) {
+      return { tempoStr: '—', totalMin: 0 };
     }
     const inicio = new Date(chamado.criado_em);
-    const fim = chamado.concluido_em
-      ? new Date(chamado.concluido_em)
-      : new Date();
-    const diffMs = fim - inicio;
-    const minutos = Math.floor(diffMs / 60000);
+    const fim    = new Date(chamado.concluido_em);
+    const minutos = Math.floor((fim - inicio) / 60000);
     return {
       tempoStr: `${minutos} min`,
       totalMin: minutos
