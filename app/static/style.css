@@ -174,7 +174,7 @@ body {
 
 .modal-body {
     background-color: #f8f9fa; /* Fundo claro */
-    color: #212529; /* Texto escuro */
+    color: #050505; /* Texto escuro */
 }
 
 .dark-theme .modal-body {
