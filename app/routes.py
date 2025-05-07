@@ -5,6 +5,7 @@ import os, requests, logging
 from . import db, bcrypt
 from .models import Usuario, Chamado
 from sqlalchemy.sql import func
+from app.spotify_routes import spotify_bp
 
 bp = Blueprint('routes_bp', __name__)
 
