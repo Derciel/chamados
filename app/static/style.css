@@ -4,17 +4,17 @@
     --card-bg: #ffffff;
     --input-bg: #ffffff;
     --input-text: #333333;
-    --input-border: #ccc;
-    --placeholder: #aaa;
+    --input-border: #292929;
+    --placeholder: #1d1b1b;
 }
 
 [data-theme="dark"] {
     --bg: #111111;
-    --text: #f0f0f0;
+    --text: #1a1616;
     --card-bg: #111111;
     --input-bg: #111111;
     --input-text: #f0f0f0;
-    --input-border: #000000;
+    --input-border: #3f3f3f;
     --placeholder: #000000;
 }
 
