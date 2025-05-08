@@ -9,12 +9,12 @@
 }
 
 [data-theme="dark"] {
-    --bg: #1f1f1f;
+    --bg: #111111;
     --text: #f0f0f0;
-    --card-bg: #2a2a2a;
-    --input-bg: #2a2a2a;
+    --card-bg: #111111;
+    --input-bg: #111111;
     --input-text: #f0f0f0;
-    --input-border: #444;
+    --input-border: #000000;
     --placeholder: #000000;
 }
 
