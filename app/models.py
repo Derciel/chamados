@@ -23,8 +23,10 @@ class Chamado(db.Model):
     observacao = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     funcionario_id = db.Column(db.Integer)
+    glpi_ticket_id = db.Column(db.Integer, nullable=True, unique=True)
     notificado = db.Column(db.Boolean, default=False)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     iniciado_em = db.Column(db.DateTime)
     andamento_em = db.Column(db.DateTime)
     concluido_em = db.Column(db.DateTime)
+

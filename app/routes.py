@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash, jsonify
+from .glpi_integration import GLPIIntegration
 from datetime import datetime
 import os, requests, logging
 
@@ -181,6 +182,55 @@ def novo_chamado():
 
         db.session.add(novo_chamado)
         db.session.commit()
+        
+        # --- INÍCIO DA INTEGRAÇÃO COM GLPI ---
+        try:
+            # 1. Pega as configurações do GLPI do app Flask
+            glpi_url = current_app.config.get('GLPI_URL')
+            app_token = current_app.config.get('GLPI_APP_TOKEN')
+            user_token = current_app.config.get('GLPI_USER_TOKEN')
+
+            if not all([glpi_url, app_token, user_token]):
+                logging.warning("Configurações do GLPI não estão completas. Pulando sincronização.")
+            else:
+                # 2. Inicia o conector e autentica
+                glpi_connector = GLPIIntegration(glpi_url, user_token, app_token)
+                if glpi_connector.authenticate():
+                    
+                    # 3. Prepara os dados do chamado para enviar ao GLPI
+                    # Você pode adicionar mais campos aqui, como 'anydesk' se tiver
+                    chamado_data_para_glpi = {
+                        'nome': novo_chamado.nome,
+                        'setor': novo_chamado.setor,
+                        'descricao': novo_chamado.descricao,
+                        'prioridade': 'Baixa', # Defina uma prioridade padrão ou pegue do formulário
+                        'observacoes': '' # O campo de observação geralmente é preenchido depois
+                    }
+                    
+                    # 4. Cria o ticket no GLPI
+                    glpi_id = glpi_connector.create_ticket(chamado_data_para_glpi)
+                    
+                    if glpi_id:
+                        # 5. Se o ticket foi criado, salva o ID no nosso banco de dados
+                        novo_chamado.glpi_ticket_id = glpi_id
+                        db.session.commit()
+                        flash(f"Chamado registrado com sucesso e sincronizado com o GLPI (Ticket #{glpi_id})!", "success")
+                    else:
+                        flash("Chamado registrado localmente, mas falhou ao sincronizar com o GLPI.", "warning")
+                    
+                    glpi_connector.close_session()
+                else:
+                    flash("Chamado registrado localmente, mas falhou a autenticação com o GLPI.", "danger")
+
+        except Exception as e:
+            logging.error(f"Erro inesperado durante a sincronização com GLPI: {e}")
+            flash("Ocorreu um erro na integração com o GLPI.", "danger")
+        
+        # Se a integração falhar, o chamado ainda foi salvo localmente
+        if not 'glpi_ticket_id' in locals() or not glpi_id:
+             flash("Chamado registrado com sucesso!", "success")
+
+        # --- FIM DA INTEGRAÇÃO COM GLPI ---
 
         flash("Chamado registrado!", "success")
         return redirect(url_for('routes_bp.meus_chamados_resolvidos'))
@@ -284,6 +334,43 @@ def chamado_detalhe(id):
         chamado.status = novo_status
         chamado.observacao = data.get("observacao", chamado.observacao)
         db.session.commit()
+        
+                # --- INÍCIO DA SINCRONIZAÇÃO DE ATUALIZAÇÃO COM GLPI ---
+        if chamado.glpi_ticket_id:
+            logging.info(f"Iniciando sincronização de atualização para o chamado local ID {id} (GLPI ID: {chamado.glpi_ticket_id})")
+            
+            try:
+                glpi_url = current_app.config.get('GLPI_URL')
+                app_token = current_app.config.get('GLPI_APP_TOKEN')
+                user_token = current_app.config.get('GLPI_USER_TOKEN')
+                
+                # Instancia o conector
+                glpi_connector = GLPIIntegration(glpi_url, user_token, app_token)
+
+                if glpi_connector.authenticate():
+                    sincronizado = False
+                    # 1. Sincroniza a MUDANÇA DE STATUS
+                    if novo_status and novo_status != status_anterior:
+                        glpi_connector.update_ticket_status(chamado.glpi_ticket_id, novo_status)
+                        sincronizado = True
+                    
+                    # 2. Sincroniza a NOVA OBSERVAÇÃO como um acompanhamento
+                    if nova_observacao and nova_observacao != observacao_anterior:
+                        # Adiciona um contexto para a observação no GLPI
+                        conteudo_followup = f"Observação adicionada via sistema: {nova_observacao}"
+                        glpi_connector.add_followup(chamado.glpi_ticket_id, conteudo_followup)
+                        sincronizado = True
+
+                    glpi_connector.close_session()
+
+                    if sincronizado:
+                        return jsonify({"mensagem": "Chamado atualizado e sincronizado com o GLPI."})
+
+            except Exception as e:
+                logging.error(f"Erro na sincronização da atualização do chamado ID {id} com GLPI: {e}")
+                # A resposta abaixo informa que a atualização local funcionou, mas a do GLPI não.
+                return jsonify({"mensagem": "Chamado atualizado localmente, mas falhou ao sincronizar com o GLPI."}), 500
+        
         return jsonify({"mensagem": "Chamado atualizado"})
 
     elif request.method == 'DELETE':
