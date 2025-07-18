@@ -14,3 +14,4 @@ Flask-Cors
 torch
 transformers
 accelerate
+eventlet
