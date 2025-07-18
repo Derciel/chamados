@@ -64,7 +64,7 @@ def novo_chamado():
         db.session.commit()
         
         flash("Chamado registrado com sucesso!", "success")
-        return redirect(url_for('routes_bp.dashboard'))
+        return redirect(url_for('routes_bp.novo_chamado'))
 
     return render_template('novo_chamado.html')
 
@@ -118,7 +118,7 @@ def register():
 @bp.route('/logout')
 def logout():
     session.clear()
-    flash("Sessão encerrada", "info")
+    flash("Você foi desconectado.")
     return redirect(url_for('routes_bp.login'))
 
 # --- ROTAS DA API (Para o nosso frontend JavaScript) ---

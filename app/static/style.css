@@ -9,13 +9,13 @@
 }
 
 [data-theme="dark"] {
-    --bg: #111111;
+    --bg: #0a0a0a;
     --text: #1a1616;
-    --card-bg: #111111;
-    --input-bg: #111111;
+    --card-bg: #131212;
+    --input-bg: #473f3f;
     --input-text: #f0f0f0;
     --input-border: #3f3f3f;
-    --placeholder: #000000;
+    --placeholder: #030000;
 }
 
 /* Corpo */
