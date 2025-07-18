@@ -5,7 +5,9 @@ gunicorn
 requests
 psycopg2
 requests
-flask-cors
 llama-cpp-python
 pyngrok
 python-dotenv
+Flask-SocketIO
+googletrans==4.0.0-rc1
+Flask-Cors

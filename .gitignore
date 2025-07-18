@@ -1,6 +1,17 @@
 
-__pycache__/
+
 *.pyc
 .vercel
 *.gguf
 models/
+
+
+
+# Ambientes Virtuais
+venv/
+
+# Arquivos de cache do Python
+__pycache__/
+
+# Arquivos de ambiente (senhas, chaves de API, etc.)
+.en
