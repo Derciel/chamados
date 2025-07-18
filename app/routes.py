@@ -228,18 +228,31 @@ def graficos():
 
 @bp.route("/api/notificacoes")
 def notificacoes():
+    """
+    API que busca chamados com status importantes que ainda não foram notificados ao usuário.
+    """
     if "usuario_id" not in session:
         return jsonify([])
 
     usuario_id = session["usuario_id"]
-    chamados_nao_notificados = Chamado.query.filter_by(
-        user_id=usuario_id,
-        status="Finalizado",
-        notificado=False
+
+    # ✅ CORREÇÃO: Agora busca por múltiplos status relevantes.
+    status_para_notificar = ["Finalizado", "Resolvido", "Concluído", "Pendente"]
+
+    chamados_nao_notificados = Chamado.query.filter(
+        Chamado.user_id == usuario_id,
+        Chamado.status.in_(status_para_notificar), # Usa .in_() para verificar a lista de status
+        Chamado.notificado == False
     ).all()
 
+    # Retorna uma lista mais completa para a notificação
     return jsonify([
-        {"id": ch.id, "nome": ch.nome, "setor": ch.setor}
+        {
+            "id": ch.id, 
+            "nome": ch.nome, 
+            "setor": ch.setor,
+            "status": ch.status # Inclui o status para a mensagem ser mais clara
+        }
         for ch in chamados_nao_notificados
     ])
 
@@ -257,20 +270,21 @@ def marcar_notificacao(id):
     db.session.commit()
     return jsonify({"mensagem": "Notificação marcada"}), 200
 
-@bp.route('/meus-chamados-resolvidos')
+@bp.route('/meus-chamados-resolvidos', endpoint='meus_chamados_resolvidos')
 def meus_chamados_resolvidos():
     if 'usuario_id' not in session:
         flash('Faça login para ver seus chamados.', 'warning')
         return redirect(url_for('routes_bp.login'))
 
-    # Busca no banco de dados os chamados do usuário logado que estão finalizados
     usuario_id = session['usuario_id']
+    
+    status_visiveis = ["Aberto", "Em andamento", "Pendente", "Finalizado", "Resolvido", "Concluído"]
+    
     chamados = Chamado.query.filter(
         Chamado.user_id == usuario_id,
-        Chamado.status.in_(["Finalizado", "Resolvido", "Concluído"])
+        Chamado.status.in_(status_visiveis)
     ).order_by(Chamado.concluido_em.desc()).all()
 
-    # Renderiza um template para exibir esses chamados
     return render_template('chamados_resolvidos.html', chamados=chamados)
 
 @bp.route('/reset-password', methods=['GET', 'POST'])

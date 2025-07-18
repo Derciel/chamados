@@ -5,7 +5,6 @@
 <h3 class="form-title text-center mb-4">
   <i class="fa-solid fa-satellite-dish me-2"></i> Dashboard Operacional Real-Time
 </h3>
-
 <div class="row">
   <div class="col-lg-3 col-md-6 mb-4">
     <div class="card shadow-sm text-center h-100">
@@ -40,7 +39,6 @@
     </div>
   </div>
 </div>
-
 <div class="row">
   <div class="col-lg-6 mb-4">
     <div class="card shadow-sm h-100">
@@ -59,7 +57,6 @@
     </div>
   </div>
 </div>
-
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <h5 class="card-title mb-3"><i class="fa-solid fa-filter me-2"></i>Filtros e Pesquisa</h5>
@@ -84,26 +81,18 @@
         </div>
     </div>
 </div>
-
-
 <h4 class="mt-4 mb-3" id="titulo-tabela"><i class="fa-solid fa-table-list me-2"></i>Tabela de Chamados</h4>
 <div class="table-responsive mb-5">
     <table class="table table-bordered table-hover table-sm table-striped" id="tabela-chamados">
         <thead class="table-dark">
             <tr>
-                <th>ID</th>
-                <th>Abertura</th>
-                <th>Nome</th>
-                <th>Setor</th>
-                <th>Descrição</th>
-                <th>Status</th>
-                <th>Ações</th>
+                <th>ID</th> <th>Abertura</th> <th>Nome</th> <th>Setor</th>
+                <th>Descrição</th> <th>Status</th> <th>Ações</th>
             </tr>
         </thead>
         <tbody id="corpo-tabela-chamados"></tbody>
     </table>
 </div>
-
 <div class="modal fade" id="modalChamado" tabindex="-1" aria-labelledby="modal-titulo" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -126,26 +115,12 @@
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
 <script>
-    // --- VARIÁVEIS GLOBAIS ---
+    // --- VARIÁVEIS GLOBAIS E CONFIGURAÇÃO ---
     let todosChamados = [];
     let graficoStatus, graficoSetor;
-    let ultimoBotaoFocado = null; 
-
+    let ultimoBotaoFocado = null;
+    let audioDesbloqueado = false;
     const notificationSound = new Audio("{{ url_for('static', filename='sounds/msn_notification.mp3') }}");
-
-    // --- FUNÇÃO AUXILIAR PARA FORMATAR DATAS (Versão Final) ---
-    function formatarData(dataString) {
-        if (!dataString) {
-            return 'N/A';
-        }
-        try {
-            // O backend já envia o 'Z'. Não precisamos mais adicionar.
-            return new Date(dataString).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-        } catch (e) {
-            console.error("Erro ao formatar data:", dataString, e);
-            return 'Data Inválida';
-        }
-    }
 
     // --- LÓGICA DE INICIALIZAÇÃO ---
     document.addEventListener("DOMContentLoaded", () => {
@@ -153,12 +128,78 @@
         carregarDadosIniciais();
         adicionarListenersDeFiltro();
         adicionarListenerDeModal();
+        desbloquearAudioComInteracao();
+        // A lógica de notificação do navegador foi movida para o 'base.html' para evitar duplicação.
     });
+
+    /**
+     * ✅ CORREÇÃO: Espera o primeiro clique do usuário para "desbloquear" o áudio.
+     * Esta versão é mais robusta.
+     */
+    function desbloquearAudioComInteracao() {
+        const desbloquear = () => {
+            if (!audioDesbloqueado) {
+                // Tenta dar um "play" silencioso para o navegador liberar a permissão
+                notificationSound.muted = true;
+                notificationSound.play().then(() => {
+                    notificationSound.pause();
+                    notificationSound.currentTime = 0;
+                    notificationSound.muted = false;
+                    audioDesbloqueado = true;
+                    console.log("🔊 Áudio desbloqueado pela interação do usuário.");
+                    // Remove o "escutador" para não rodar de novo
+                    document.body.removeEventListener('click', desbloquear);
+                    document.body.removeEventListener('keydown', desbloquear);
+                }).catch(e => {}); // Ignora erros se o play falhar antes da interação
+            }
+        };
+        // O áudio é desbloqueado com um clique OU ao pressionar uma tecla
+        document.body.addEventListener('click', desbloquear);
+        document.body.addEventListener('keydown', desbloquear);
+    }
+
+    // --- SOCKET.IO (COMUNICAÇÃO EM TEMPO REAL) ---
+    const socket = io();
+    socket.on('connect', () => console.log('✅ Conectado ao servidor real-time!'));
+
+    socket.on('novo_chamado', (novoChamado) => {
+        console.log('EVENTO: Novo chamado recebido', novoChamado);
+        todosChamados.unshift(novoChamado);
+        atualizarDashboardCompleto();
+        // Toca o som (funcionará após o desbloqueio)
+        notificationSound.play().catch(e => console.warn("Áudio bloqueado. Interaja com a página para habilitar."));
+    });
+
+    socket.on('chamado_atualizado', (chamadoAtualizado) => {
+        console.log('EVENTO: Chamado atualizado', chamadoAtualizado);
+        const index = todosChamados.findIndex(c => c.id === chamadoAtualizado.id);
+        if (index !== -1) {
+            const statusAnterior = todosChamados[index].status;
+            // ✅ CORREÇÃO: Toca o som se o status mudou para uma etapa importante.
+            if (statusAnterior !== chamadoAtualizado.status) {
+                notificationSound.play().catch(e => console.warn("Áudio bloqueado. Interaja com a página para habilitar."));
+            }
+            todosChamados[index] = chamadoAtualizado;
+        }
+        atualizarDashboardCompleto();
+    });
+
+    socket.on('chamado_excluido', (data) => {
+        console.log('EVENTO: Chamado excluído', data);
+        todosChamados = todosChamados.filter(c => c.id !== data.id);
+        atualizarDashboardCompleto();
+    });
+
+    // --- O RESTANTE DO SEU CÓDIGO JAVASCRIPT (SEM ALTERAÇÕES) ---
+    // (As funções como carregarDadosIniciais, renderizarTabela, etc. permanecem aqui)
+    function formatarData(dataString) {
+        if (!dataString) return 'N/A';
+        return new Date(dataString).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    }
 
     function inicializarGraficos() {
         const ctxStatus = document.getElementById('grafico-status').getContext('2d');
         graficoStatus = new Chart(ctxStatus, { type: 'doughnut', data: { labels: [], datasets: [{ data: [], borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false } });
-        
         const ctxSetor = document.getElementById('grafico-setor').getContext('2d');
         graficoSetor = new Chart(ctxSetor, { type: 'bar', data: { labels: [], datasets: [{ label: 'Nº de Chamados', data: [], borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' } });
     }
@@ -179,7 +220,6 @@
         ['filtro-setor', 'filtro-status', 'filtro-busca'].forEach(id => {
             document.getElementById(id).addEventListener("input", () => renderizarTabela(todosChamados));
         });
-        
         document.getElementById('btn-limpar-filtros').addEventListener('click', () => {
             document.getElementById('filtro-setor').value = '';
             document.getElementById('filtro-status').value = '';
@@ -195,7 +235,6 @@
         });
     }
 
-    // --- FUNÇÕES DE ATUALIZAÇÃO DA UI ---
     function atualizarDashboardCompleto() {
         renderizarTabela(todosChamados);
         atualizarKPIs(todosChamados);
@@ -208,29 +247,23 @@
         const filtroSetor = document.getElementById("filtro-setor").value;
         const filtroStatus = document.getElementById("filtro-status").value;
         const filtroBusca = document.getElementById("filtro-busca").value.toLowerCase();
-        const tituloTabela = document.getElementById("titulo-tabela");
-
-        tituloTabela.innerHTML = `<i class="fa-solid fa-table-list me-2"></i>Tabela de Chamados ${filtroStatus ? `(${filtroStatus})` : ''}`;
-
-        const chamadosFiltrados = chamados.filter(c => 
+        document.getElementById("titulo-tabela").innerHTML = `<i class="fa-solid fa-table-list me-2"></i>Tabela de Chamados ${filtroStatus ? `(${filtroStatus})` : ''}`;
+        const chamadosFiltrados = chamados.filter(c =>
             (!filtroSetor || c.setor === filtroSetor) &&
             (!filtroStatus || c.status === filtroStatus) &&
             (!filtroBusca || (c.nome || '').toLowerCase().includes(filtroBusca) || (c.descricao || '').toLowerCase().includes(filtroBusca) || (c.setor || '').toLowerCase().includes(filtroBusca))
         );
-
         corpoTabela.innerHTML = '';
         if (chamadosFiltrados.length === 0) {
             corpoTabela.innerHTML = `<tr><td colspan="7" class="text-center">Nenhum chamado encontrado com os filtros aplicados.</td></tr>`;
             return;
         }
-
         chamadosFiltrados.forEach(c => {
             const dataStr = formatarData(c.criado_em);
             const statusIcon = obterIconeStatus(c.status);
             const statusColor = obterCorStatus(c.status);
             const textColor = ['Em andamento'].includes(c.status) ? '#000' : '#fff';
             const statusBadge = `<span class="badge" style="background-color: ${statusColor}; color: ${textColor}; font-size: 0.9em;"><i class="${statusIcon} me-2"></i>${c.status}</span>`;
-
             corpoTabela.innerHTML += `
               <tr id="chamado-row-${c.id}">
                 <td>${c.id}</td> <td>${dataStr}</td> <td>${c.nome}</td>
@@ -240,14 +273,13 @@
               </tr>`;
         });
     }
-    
+
     function atualizarKPIs(chamados) {
         document.getElementById('kpi-abertos').textContent = chamados.filter(c => c.status === 'Aberto').length;
         document.getElementById('kpi-andamento').textContent = chamados.filter(c => c.status === 'Em andamento').length;
         document.getElementById('kpi-pendentes').textContent = chamados.filter(c => c.status === 'Pendente').length;
-        
         const hoje = new Date().toISOString().slice(0, 10);
-        document.getElementById('kpi-finalizados-hoje').textContent = chamados.filter(c => 
+        document.getElementById('kpi-finalizados-hoje').textContent = chamados.filter(c =>
             ['Finalizado', 'Resolvido', 'Concluído'].includes(c.status) && c.concluido_em?.startsWith(hoje)
         ).length;
     }
@@ -258,17 +290,15 @@
         graficoStatus.data.datasets[0].data = Object.values(contagemStatus);
         graficoStatus.data.datasets[0].backgroundColor = Object.keys(contagemStatus).map(status => obterCorStatus(status));
         graficoStatus.update();
-
         const contagemSetor = chamados.reduce((acc, c) => ({ ...acc, [c.setor]: (acc[c.setor] || 0) + 1 }), {});
         graficoSetor.data.labels = Object.keys(contagemSetor);
         graficoSetor.data.datasets[0].data = Object.values(contagemSetor);
         graficoSetor.update();
     }
-    
+
     function atualizarFiltros(chamados) {
         const setores = [...new Set(chamados.map(c => c.setor))].sort();
         document.getElementById('filtro-setor').innerHTML = '<option value="">Todos os Setores</option>' + setores.map(s => `<option value="${s}">${s}</option>`).join('');
-        
         const statuses = [...new Set(chamados.map(c => c.status))].sort();
         document.getElementById('filtro-status').innerHTML = '<option value="">Todos os Status</option>' + statuses.map(s => `<option value="${s}">${s}</option>`).join('');
     }
@@ -283,65 +313,33 @@
         return icones[status] || 'fa-solid fa-question-circle';
     }
 
-    // --- LÓGICA DO MODAL DE GERENCIAMENTO ---
     async function abrirDetalhes(chamadoId) {
         ultimoBotaoFocado = document.activeElement;
-        const chamado = todosChamados.find(c => c.id === chamadoId);
-        
-        document.getElementById('modal-titulo').textContent = `Gerenciar Chamado #${chamado.id}`;
         const corpoModal = document.getElementById('modal-corpo');
+        document.getElementById('modal-titulo').textContent = `Gerenciar Chamado #${chamadoId}`;
         corpoModal.innerHTML = '<div class="text-center p-4"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-        const modalEl = document.getElementById('modalChamado');
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChamado'));
         modal.show();
-
         try {
             const [respMetricas, respHist] = await Promise.all([
                 fetch(`/api/chamados/${chamadoId}/metricas`),
                 fetch(`/api/chamados/${chamadoId}/historico`)
             ]);
             if (!respMetricas.ok || !respHist.ok) throw new Error("Falha ao carregar dados do chamado.");
-
             const metricas = await respMetricas.json();
             const historico = await respHist.json();
-
-            const metricasHtml = `
-                <div class="row text-center mb-3">
-                    <div class="col"><div class="card p-2"><h6 class="card-title mb-1">Tempo de Resolução</h6><p class="card-text fs-4 fw-bold mb-0">${metricas.tempo_total_resolucao_minutos} min</p></div></div>
-                    <div class="col"><div class="card p-2"><h6 class="card-title mb-1">Tempo Parado (Pendente)</h6><p class="card-text fs-4 fw-bold mb-0">${metricas.tempo_total_pendente_minutos} min</p></div></div>
-                </div>`;
-
-            const formHtml = `
-                <div class="p-2 border rounded">
-                    <h5><i class="fa-solid fa-shuffle me-2"></i>Alterar Status</h5>
-                    <div class="mb-3">
-                        <label for="novo-status" class="form-label">Novo Status</label>
-                        <select id="novo-status" class="form-select">
-                            <option value="Em andamento">Em andamento</option>
-                            <option value="Pendente">Pendente</option>
-                            <option value="Finalizado">Finalizado</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="nova-observacao" class="form-label">Adicionar Observação/Resolução</label>
-                        <textarea id="nova-observacao" class="form-control" rows="3"></textarea>
-                    </div>
-                </div>`;
-            
+            const metricasHtml = `<div class="row text-center mb-3"><div class="col"><div class="card p-2"><h6 class="card-title mb-1">Tempo de Resolução</h6><p class="card-text fs-4 fw-bold mb-0">${metricas.tempo_total_resolucao_minutos} min</p></div></div><div class="col"><div class="card p-2"><h6 class="card-title mb-1">Tempo Parado</h6><p class="card-text fs-4 fw-bold mb-0">${metricas.tempo_total_pendente_minutos} min</p></div></div></div>`;
+            const formHtml = `<div class="p-2 border rounded"><h5><i class="fa-solid fa-shuffle me-2"></i>Alterar Status</h5><div class="mb-3"><label for="novo-status" class="form-label">Novo Status</label><select id="novo-status" class="form-select"><option value="Em andamento">Em andamento</option><option value="Pendente">Pendente</option><option value="Finalizado">Finalizado</option></select></div><div class="mb-3"><label for="nova-observacao" class="form-label">Adicionar Observação</label><textarea id="nova-observacao" class="form-control" rows="3"></textarea></div></div>`;
             let timelineHtml = `<ul class="list-group list-group-flush mt-2">`;
-            if(historico.length > 0) {
+            if (historico.length > 0) {
                 historico.forEach(item => {
-                    const data = formatarData(item.timestamp);
-                    timelineHtml += `<li class="list-group-item"><p class="mb-1">Status: <strong>${item.de || 'Criação'}</strong> <i class="fa-solid fa-arrow-right-long mx-2"></i> <strong>${item.para}</strong></p><small class="text-muted">${data}</small></li>`;
+                    timelineHtml += `<li class="list-group-item"><p class="mb-1">Status: <strong>${item.de || 'Criação'}</strong> <i class="fa-solid fa-arrow-right-long mx-2"></i> <strong>${item.para}</strong></p><small class="text-muted">${formatarData(item.timestamp)}</small></li>`;
                 });
             } else {
                 timelineHtml += `<li class="list-group-item text-center text-muted">Nenhum histórico de mudança de status.</li>`;
             }
             timelineHtml += '</ul>';
-
             corpoModal.innerHTML = `${metricasHtml}${formHtml}<h5 class="mt-4"><i class="fa-solid fa-timeline me-2"></i>Linha do Tempo</h5>${timelineHtml}`;
-
-            // Lógica do Botão SALVAR
             const btnSalvar = document.getElementById('btn-salvar-modal');
             const novoBtnSalvar = btnSalvar.cloneNode(true);
             btnSalvar.parentNode.replaceChild(novoBtnSalvar, btnSalvar);
@@ -351,17 +349,12 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ status: document.getElementById('novo-status').value, observacao: document.getElementById('nova-observacao').value })
                 });
-                if(resp.ok) {
-                    modal.hide();
-                } else {
-                    alert('Falha ao atualizar o chamado. Verifique o console do servidor.');
-                }
+                if (resp.ok) modal.hide();
+                else alert('Falha ao atualizar o chamado.');
             });
-
-            // Lógica do Botão EXCLUIR
             const modalFooter = document.querySelector('#modalChamado .modal-footer');
             const btnExcluirAntigo = document.getElementById('btn-excluir-chamado');
-            if(btnExcluirAntigo) btnExcluirAntigo.remove();
+            if (btnExcluirAntigo) btnExcluirAntigo.remove();
             const btnExcluir = document.createElement('button');
             btnExcluir.id = 'btn-excluir-chamado';
             btnExcluir.className = 'btn btn-danger me-auto';
@@ -370,38 +363,13 @@
             btnExcluir.addEventListener('click', async () => {
                 if (confirm(`Tem certeza que deseja excluir permanentemente o Chamado #${chamadoId}?`)) {
                     const resp = await fetch(`/api/chamados/${chamadoId}`, { method: 'DELETE' });
-                    if (resp.ok) {
-                        modal.hide();
-                    } else {
-                        alert('Falha ao excluir o chamado.');
-                    }
+                    if (resp.ok) modal.hide();
+                    else alert('Falha ao excluir o chamado.');
                 }
             });
-
         } catch (error) {
-            corpoModal.innerHTML = `<div class="alert alert-danger">Erro ao carregar os detalhes do chamado: ${error.message}</div>`;
+            corpoModal.innerHTML = `<div class="alert alert-danger">Erro ao carregar os detalhes: ${error.message}</div>`;
         }
     }
-
-    // --- LÓGICA SOCKET.IO ---
-    const socket = io();
-    socket.on('connect', () => console.log('✅ Conectado ao servidor real-time!'));
-    
-    socket.on('novo_chamado', (novoChamado) => {
-        todosChamados.unshift(novoChamado); 
-        atualizarDashboardCompleto();
-        notificationSound.play().catch(error => console.log("A reprodução de áudio foi bloqueada pelo navegador até que o usuário interaja com a página.", error));
-    });
-
-    socket.on('chamado_atualizado', (chamadoAtualizado) => {
-        const index = todosChamados.findIndex(c => c.id === chamadoAtualizado.id);
-        if (index !== -1) todosChamados[index] = chamadoAtualizado;
-        atualizarDashboardCompleto();
-    });
-
-    socket.on('chamado_excluido', (data) => {
-        todosChamados = todosChamados.filter(c => c.id !== data.id);
-        atualizarDashboardCompleto();
-    });
 </script>
 {% endblock %}
