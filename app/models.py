@@ -23,8 +23,23 @@ class Chamado(db.Model):
     observacao = db.Column(db.Text)
     user_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     funcionario_id = db.Column(db.Integer)
+    glpi_ticket_id = db.Column(db.Integer, nullable=True, unique=True)
     notificado = db.Column(db.Boolean, default=False)
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
     iniciado_em = db.Column(db.DateTime)
     andamento_em = db.Column(db.DateTime)
     concluido_em = db.Column(db.DateTime)
+    
+    
+class HistoricoChamado(db.Model):
+    __tablename__ = 'historico_chamado'
+    id = db.Column(db.Integer, primary_key=True)
+    chamado_id = db.Column(db.Integer, db.ForeignKey('chamados.id'), nullable=False)
+    campo_alterado = db.Column(db.String(50), default='status') 
+    valor_anterior = db.Column(db.String(100))
+    valor_novo = db.Column(db.String(100), nullable=False)
+    observacao = db.Column(db.Text) 
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+
+

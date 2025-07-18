@@ -6,7 +6,7 @@ chatbot_bp = Blueprint('chatbot_bp', __name__)
 
 # Tenta importar o modelo local apenas se não for o Render
 if not os.getenv("RENDER_ENV"):
-    from llama_bot import gerar_resposta
+    from .llama_bot import gerar_resposta
 else:
     def gerar_resposta(pergunta):
         return "🤖 Assistente LLaMA está disponível apenas no ambiente local."

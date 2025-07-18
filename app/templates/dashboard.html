@@ -1,341 +1,407 @@
 {% extends "base.html" %}
-{% block title %}Chamados TI - Detalhes{% endblock %}
+{% block title %}Dashboard Operacional Real-Time{% endblock %}
 
 {% block content %}
 <h3 class="form-title text-center mb-4">
-  <i class="fa-solid fa-list-check me-2"></i> Chamados TI e Manutenção
+  <i class="fa-solid fa-satellite-dish me-2"></i> Dashboard Operacional Real-Time
 </h3>
 
 <div class="row">
-  <div class="col-md-6 mb-4">
-    <canvas id="graficoSetor"></canvas>
-  </div>
-  <div class="col-md-6 mb-4">
-    <canvas id="graficoTempo"></canvas>
-  </div>
-</div>
-
-<!-- Filtros -->
-<div class="row mb-4">
-  <div class="col-md-3">
-    <label for="filtro-setor" class="form-label">Filtrar por Setor</label>
-    <select id="filtro-setor" class="form-select">
-      <option value="">Todos os Setores</option>
-    </select>
-  </div>
-  <div class="col-md-3">
-    <label for="filtro-status" class="form-label">Filtrar por Status</label>
-    <select id="filtro-status" class="form-select">
-      <option value="">Todos os Status</option>
-      <option value="Pendente">Pendente</option>
-      <option value="Em andamento">Em andamento</option>
-      <option value="Finalizado">Finalizado</option>
-      <option value="Resolvido">Resolvido</option>
-    </select>
-  </div>
-  <div class="col-md-3">
-    <label for="filtro-prioridade" class="form-label">Filtrar por Prioridade</label>
-    <select id="filtro-prioridade" class="form-select">
-      <option value="">Todas</option>
-      <option value="Baixa">Baixa</option>
-      <option value="Média">Média</option>
-      <option value="Alta">Alta</option>
-    </select>
-  </div>
-  <div class="col-md-3">
-    <label for="filtro-busca" class="form-label">Buscar</label>
-    <input type="text" id="filtro-busca" class="form-control" placeholder="Nome, setor, descrição...">
-  </div>
-</div>
-
-<!-- Tabela com todos os dados -->
-<div class="table-responsive mb-5">
-  <table class="table table-bordered table-sm table-striped">
-    <thead class="table-dark">
-      <tr>
-        <th>Data</th>
-        <th>Nome</th>
-        <th>Setor</th>
-        <th>Prioridade</th>
-        <th>Descrição</th>
-        <th>Status</th>
-        <th>Tempo (min)</th>
-        <th>Observações</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody id="tabela-chamados"></tbody>
-  </table>
-</div>
-
-<!-- Modal para detalhes do chamado -->
-<div class="modal fade" id="modalChamado" tabindex="-1">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title text-dark">Detalhes do Chamado</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body text-dark">
-        <div class="card mb-3 p-3 shadow-sm">
-          <h5><i class="fa fa-ticket-alt me-2"></i> Chamado</h5>
-
-          <p><strong>ID do chamado:</strong> <span id="card-id">---</span></p>
-          <p><strong>Nome:</strong> <span id="card-nome">---</span></p>
-          <p><strong>Setor:</strong> <span id="card-setor">---</span></p>
-          <p>
-            <strong>Prioridade:</strong>
-            <select id="card-prioridade-select" class="form-select form-select-sm" style="width:auto; display:inline-block;">
-              <option value="Baixa">Baixa</option>
-              <option value="Média">Média</option>
-              <option value="Alta">Alta</option>
-            </select>
-          </p>
-          <p><strong>Descrição:</strong> <span id="card-desc">---</span></p>
-          <p><strong>Data:</strong> <span id="card-data">---</span></p>
-          <p><strong>Tempo decorrido:</strong> <span id="card-tempo">0 min</span></p>
-
-          <div class="mb-3">
-            <label for="card-observacao" class="form-label">Observações</label>
-            <textarea id="card-observacao" class="form-control" rows="3"></textarea>
-          </div>
-
-          <!-- Linha do tempo -->
-          <div class="timeline mt-3">
-            <div class="step" id="card-step-iniciado" onclick="atualizarStatusChamado('Pendente')">Iniciado</div>
-            <div class="step" id="card-step-andamento" onclick="atualizarStatusChamado('Em andamento')">Em andamento</div>
-            <div class="step" id="card-step-concluido" onclick="atualizarStatusChamado('Finalizado')">Concluído</div>
-          </div>
-
-          <!-- Botões -->
-          <div class="text-end mt-4">
-            <button class="btn btn-secondary me-2" data-bs-dismiss="modal">Fechar</button>
-            <button class="btn btn-success" onclick="salvarAlteracoesChamado()">Salvar</button>
-          </div>
-        </div>
+  <div class="col-lg-3 col-md-6 mb-4">
+    <div class="card shadow-sm text-center h-100">
+      <div class="card-body d-flex flex-column justify-content-center">
+        <h5 class="card-title">Chamados Abertos</h5>
+        <p class="card-text fs-2 fw-bold" id="kpi-abertos">0</p>
       </div>
     </div>
   </div>
+  <div class="col-lg-3 col-md-6 mb-4">
+    <div class="card shadow-sm text-center h-100">
+      <div class="card-body d-flex flex-column justify-content-center">
+        <h5 class="card-title">Em Andamento</h5>
+        <p class="card-text fs-2 fw-bold" id="kpi-andamento">0</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 mb-4">
+    <div class="card shadow-sm text-center h-100">
+      <div class="card-body d-flex flex-column justify-content-center">
+        <h5 class="card-title">Pendentes</h5>
+        <p class="card-text fs-2 fw-bold" id="kpi-pendentes">0</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-3 col-md-6 mb-4">
+    <div class="card shadow-sm text-center h-100">
+      <div class="card-body d-flex flex-column justify-content-center">
+        <h5 class="card-title">Finalizados Hoje</h5>
+        <p class="card-text fs-2 fw-bold" id="kpi-finalizados-hoje">0</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-bold">Chamados por Status</div>
+      <div class="card-body">
+        <canvas id="grafico-status"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header fw-bold">Chamados por Setor</div>
+      <div class="card-body">
+        <canvas id="grafico-setor"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h5 class="card-title mb-3"><i class="fa-solid fa-filter me-2"></i>Filtros e Pesquisa</h5>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label for="filtro-setor" class="form-label">Setor</label>
+                <select id="filtro-setor" class="form-select"></select>
+            </div>
+            <div class="col-md-3">
+                <label for="filtro-status" class="form-label">Status</label>
+                <select id="filtro-status" class="form-select"></select>
+            </div>
+            <div class="col-md-4">
+                <label for="filtro-busca" class="form-label">Busca Livre</label>
+                <input type="text" id="filtro-busca" class="form-control" placeholder="Nome, setor, descrição...">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-secondary w-100" id="btn-limpar-filtros">
+                    <i class="fa-solid fa-eraser me-2"></i>Limpar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<h4 class="mt-4 mb-3" id="titulo-tabela"><i class="fa-solid fa-table-list me-2"></i>Tabela de Chamados</h4>
+<div class="table-responsive mb-5">
+    <table class="table table-bordered table-hover table-sm table-striped" id="tabela-chamados">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Abertura</th>
+                <th>Nome</th>
+                <th>Setor</th>
+                <th>Descrição</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="corpo-tabela-chamados"></tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="modalChamado" tabindex="-1" aria-labelledby="modal-titulo" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-dark" id="modal-titulo">Detalhes do Chamado #</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-dark" id="modal-corpo"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="btn-salvar-modal">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block actions %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
 <script>
-  let chamados = [];
-  let chamadoSelecionado = null;
-  let chartSetor = null;
-  let chartTempo = null;
+    // --- VARIÁVEIS GLOBAIS ---
+    let todosChamados = [];
+    let graficoStatus, graficoSetor;
+    let ultimoBotaoFocado = null; 
 
-  // Listeners de filtros
-  ['filtro-setor','filtro-status','filtro-prioridade'].forEach(id => {
-    document.getElementById(id).addEventListener("change", renderizarTabela);
-  });
-  document.getElementById("filtro-busca").addEventListener("input", renderizarTabela);
+    const notificationSound = new Audio("{{ url_for('static', filename='sounds/msn_notification.mp3') }}");
 
-  // Calcula tempo em minutos e pausa se concluído
-  function calcularTempo(chamado) {
-    // só calcula se já tiver data de conclusão
-    if (!chamado.criado_em || !chamado.concluido_em) {
-      return { tempoStr: '—', totalMin: 0 };
-    }
-    const inicio = new Date(chamado.criado_em);
-    const fim    = new Date(chamado.concluido_em);
-    const minutos = Math.floor((fim - inicio) / 60000);
-    return {
-      tempoStr: `${minutos} min`,
-      totalMin: minutos
-    };
-  }
-
-  async function carregarChamados() {
-    const resp = await fetch('/api/chamados');
-    chamados = await resp.json();
-    renderizarTabela();
-    gerarGraficos();
-  }
-
-  function atualizarStatusChamado(novoStatus) {
-    if (chamadoSelecionado == null) return;
-    chamados[chamadoSelecionado].status = novoStatus;
-    document.querySelectorAll('.timeline .step').forEach(s => s.classList.remove('active'));
-    if (novoStatus === 'Pendente')     document.getElementById('card-step-iniciado').classList.add('active');
-    if (novoStatus === 'Em andamento') document.getElementById('card-step-andamento').classList.add('active');
-    if (novoStatus === 'Finalizado')   document.getElementById('card-step-concluido').classList.add('active');
-  }
-
-  async function salvarAlteracoesChamado() {
-    if (chamadoSelecionado == null) return;
-    const chamado = chamados[chamadoSelecionado];
-
-    // Define concluded_em apenas na primeira finalização
-    if ((chamado.status === 'Finalizado' || chamado.status === 'Resolvido') && !chamado.concluido_em) {
-      chamado.concluido_em = new Date().toISOString();
+    // --- FUNÇÃO AUXILIAR PARA FORMATAR DATAS (Versão Final) ---
+    function formatarData(dataString) {
+        if (!dataString) {
+            return 'N/A';
+        }
+        try {
+            // O backend já envia o 'Z'. Não precisamos mais adicionar.
+            return new Date(dataString).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        } catch (e) {
+            console.error("Erro ao formatar data:", dataString, e);
+            return 'Data Inválida';
+        }
     }
 
-    // Atualiza observação e prioridade
-    chamado.observacao = document.getElementById('card-observacao').value.trim();
-    chamado.prioridade = document.getElementById('card-prioridade-select').value;
-
-    // Envia ao backend
-    await fetch(`/api/chamados/${chamado.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        status: chamado.status,
-        observacao: chamado.observacao,
-        prioridade: chamado.prioridade
-      })
+    // --- LÓGICA DE INICIALIZAÇÃO ---
+    document.addEventListener("DOMContentLoaded", () => {
+        inicializarGraficos();
+        carregarDadosIniciais();
+        adicionarListenersDeFiltro();
+        adicionarListenerDeModal();
     });
 
-    renderizarTabela();
-    bootstrap.Modal.getInstance(document.getElementById('modalChamado')).hide();
-  }
+    function inicializarGraficos() {
+        const ctxStatus = document.getElementById('grafico-status').getContext('2d');
+        graficoStatus = new Chart(ctxStatus, { type: 'doughnut', data: { labels: [], datasets: [{ data: [], borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false } });
+        
+        const ctxSetor = document.getElementById('grafico-setor').getContext('2d');
+        graficoSetor = new Chart(ctxSetor, { type: 'bar', data: { labels: [], datasets: [{ label: 'Nº de Chamados', data: [], borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' } });
+    }
 
-  function gerarGraficos() {
-    const setores = {}, tempos = [];
+    async function carregarDadosIniciais() {
+        try {
+            const resp = await fetch('/api/chamados');
+            if (!resp.ok) throw new Error(`Falha ao carregar: ${resp.statusText}`);
+            todosChamados = await resp.json();
+            atualizarDashboardCompleto();
+        } catch (error) {
+            console.error(error);
+            document.getElementById("corpo-tabela-chamados").innerHTML = `<tr><td colspan="7" class="text-center text-danger">Erro ao carregar os dados.</td></tr>`;
+        }
+    }
 
-    chamados.forEach(c => {
-      const st = c.setor || 'Indefinido';
-      setores[st] = (setores[st]||0)+1;
-      if (['Finalizado','Resolvido'].includes(c.status)) {
-        tempos.push(calcularTempo(c).totalMin);
-      }
+    function adicionarListenersDeFiltro() {
+        ['filtro-setor', 'filtro-status', 'filtro-busca'].forEach(id => {
+            document.getElementById(id).addEventListener("input", () => renderizarTabela(todosChamados));
+        });
+        
+        document.getElementById('btn-limpar-filtros').addEventListener('click', () => {
+            document.getElementById('filtro-setor').value = '';
+            document.getElementById('filtro-status').value = '';
+            document.getElementById('filtro-busca').value = '';
+            renderizarTabela(todosChamados);
+        });
+    }
+
+    function adicionarListenerDeModal() {
+        const modalEl = document.getElementById('modalChamado');
+        modalEl.addEventListener('hidden.bs.modal', () => {
+            if (ultimoBotaoFocado) ultimoBotaoFocado.focus();
+        });
+    }
+
+    // --- FUNÇÕES DE ATUALIZAÇÃO DA UI ---
+    function atualizarDashboardCompleto() {
+        renderizarTabela(todosChamados);
+        atualizarKPIs(todosChamados);
+        atualizarGraficos(todosChamados);
+        atualizarFiltros(todosChamados);
+    }
+
+    function renderizarTabela(chamados) {
+        const corpoTabela = document.getElementById("corpo-tabela-chamados");
+        const filtroSetor = document.getElementById("filtro-setor").value;
+        const filtroStatus = document.getElementById("filtro-status").value;
+        const filtroBusca = document.getElementById("filtro-busca").value.toLowerCase();
+        const tituloTabela = document.getElementById("titulo-tabela");
+
+        tituloTabela.innerHTML = `<i class="fa-solid fa-table-list me-2"></i>Tabela de Chamados ${filtroStatus ? `(${filtroStatus})` : ''}`;
+
+        const chamadosFiltrados = chamados.filter(c => 
+            (!filtroSetor || c.setor === filtroSetor) &&
+            (!filtroStatus || c.status === filtroStatus) &&
+            (!filtroBusca || (c.nome || '').toLowerCase().includes(filtroBusca) || (c.descricao || '').toLowerCase().includes(filtroBusca) || (c.setor || '').toLowerCase().includes(filtroBusca))
+        );
+
+        corpoTabela.innerHTML = '';
+        if (chamadosFiltrados.length === 0) {
+            corpoTabela.innerHTML = `<tr><td colspan="7" class="text-center">Nenhum chamado encontrado com os filtros aplicados.</td></tr>`;
+            return;
+        }
+
+        chamadosFiltrados.forEach(c => {
+            const dataStr = formatarData(c.criado_em);
+            const statusIcon = obterIconeStatus(c.status);
+            const statusColor = obterCorStatus(c.status);
+            const textColor = ['Em andamento'].includes(c.status) ? '#000' : '#fff';
+            const statusBadge = `<span class="badge" style="background-color: ${statusColor}; color: ${textColor}; font-size: 0.9em;"><i class="${statusIcon} me-2"></i>${c.status}</span>`;
+
+            corpoTabela.innerHTML += `
+              <tr id="chamado-row-${c.id}">
+                <td>${c.id}</td> <td>${dataStr}</td> <td>${c.nome}</td>
+                <td>${c.setor}</td> <td title="${c.descricao || ''}">${(c.descricao || '').substring(0, 30)}...</td>
+                <td>${statusBadge}</td>
+                <td><button class="btn btn-sm btn-primary" onclick="abrirDetalhes(${c.id})"><i class="fa-solid fa-pen-to-square"></i> Gerenciar</button></td>
+              </tr>`;
+        });
+    }
+    
+    function atualizarKPIs(chamados) {
+        document.getElementById('kpi-abertos').textContent = chamados.filter(c => c.status === 'Aberto').length;
+        document.getElementById('kpi-andamento').textContent = chamados.filter(c => c.status === 'Em andamento').length;
+        document.getElementById('kpi-pendentes').textContent = chamados.filter(c => c.status === 'Pendente').length;
+        
+        const hoje = new Date().toISOString().slice(0, 10);
+        document.getElementById('kpi-finalizados-hoje').textContent = chamados.filter(c => 
+            ['Finalizado', 'Resolvido', 'Concluído'].includes(c.status) && c.concluido_em?.startsWith(hoje)
+        ).length;
+    }
+
+    function atualizarGraficos(chamados) {
+        const contagemStatus = chamados.reduce((acc, c) => ({ ...acc, [c.status]: (acc[c.status] || 0) + 1 }), {});
+        graficoStatus.data.labels = Object.keys(contagemStatus);
+        graficoStatus.data.datasets[0].data = Object.values(contagemStatus);
+        graficoStatus.data.datasets[0].backgroundColor = Object.keys(contagemStatus).map(status => obterCorStatus(status));
+        graficoStatus.update();
+
+        const contagemSetor = chamados.reduce((acc, c) => ({ ...acc, [c.setor]: (acc[c.setor] || 0) + 1 }), {});
+        graficoSetor.data.labels = Object.keys(contagemSetor);
+        graficoSetor.data.datasets[0].data = Object.values(contagemSetor);
+        graficoSetor.update();
+    }
+    
+    function atualizarFiltros(chamados) {
+        const setores = [...new Set(chamados.map(c => c.setor))].sort();
+        document.getElementById('filtro-setor').innerHTML = '<option value="">Todos os Setores</option>' + setores.map(s => `<option value="${s}">${s}</option>`).join('');
+        
+        const statuses = [...new Set(chamados.map(c => c.status))].sort();
+        document.getElementById('filtro-status').innerHTML = '<option value="">Todos os Status</option>' + statuses.map(s => `<option value="${s}">${s}</option>`).join('');
+    }
+
+    function obterCorStatus(status) {
+        const cores = { 'Aberto': '#dc3545', 'Em andamento': '#ffc107', 'Pendente': '#6c757d', 'Finalizado': '#198754', 'Resolvido': '#198754', 'Concluído': '#198754' };
+        return cores[status] || '#0d6efd';
+    }
+
+    function obterIconeStatus(status) {
+        const icones = { 'Aberto': 'fa-solid fa-fire', 'Em andamento': 'fa-solid fa-person-digging', 'Pendente': 'fa-solid fa-clock', 'Finalizado': 'fa-solid fa-circle-check', 'Resolvido': 'fa-solid fa-circle-check', 'Concluído': 'fa-solid fa-circle-check' };
+        return icones[status] || 'fa-solid fa-question-circle';
+    }
+
+    // --- LÓGICA DO MODAL DE GERENCIAMENTO ---
+    async function abrirDetalhes(chamadoId) {
+        ultimoBotaoFocado = document.activeElement;
+        const chamado = todosChamados.find(c => c.id === chamadoId);
+        
+        document.getElementById('modal-titulo').textContent = `Gerenciar Chamado #${chamado.id}`;
+        const corpoModal = document.getElementById('modal-corpo');
+        corpoModal.innerHTML = '<div class="text-center p-4"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        const modalEl = document.getElementById('modalChamado');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+
+        try {
+            const [respMetricas, respHist] = await Promise.all([
+                fetch(`/api/chamados/${chamadoId}/metricas`),
+                fetch(`/api/chamados/${chamadoId}/historico`)
+            ]);
+            if (!respMetricas.ok || !respHist.ok) throw new Error("Falha ao carregar dados do chamado.");
+
+            const metricas = await respMetricas.json();
+            const historico = await respHist.json();
+
+            const metricasHtml = `
+                <div class="row text-center mb-3">
+                    <div class="col"><div class="card p-2"><h6 class="card-title mb-1">Tempo de Resolução</h6><p class="card-text fs-4 fw-bold mb-0">${metricas.tempo_total_resolucao_minutos} min</p></div></div>
+                    <div class="col"><div class="card p-2"><h6 class="card-title mb-1">Tempo Parado (Pendente)</h6><p class="card-text fs-4 fw-bold mb-0">${metricas.tempo_total_pendente_minutos} min</p></div></div>
+                </div>`;
+
+            const formHtml = `
+                <div class="p-2 border rounded">
+                    <h5><i class="fa-solid fa-shuffle me-2"></i>Alterar Status</h5>
+                    <div class="mb-3">
+                        <label for="novo-status" class="form-label">Novo Status</label>
+                        <select id="novo-status" class="form-select">
+                            <option value="Em andamento">Em andamento</option>
+                            <option value="Pendente">Pendente</option>
+                            <option value="Finalizado">Finalizado</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="nova-observacao" class="form-label">Adicionar Observação/Resolução</label>
+                        <textarea id="nova-observacao" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>`;
+            
+            let timelineHtml = `<ul class="list-group list-group-flush mt-2">`;
+            if(historico.length > 0) {
+                historico.forEach(item => {
+                    const data = formatarData(item.timestamp);
+                    timelineHtml += `<li class="list-group-item"><p class="mb-1">Status: <strong>${item.de || 'Criação'}</strong> <i class="fa-solid fa-arrow-right-long mx-2"></i> <strong>${item.para}</strong></p><small class="text-muted">${data}</small></li>`;
+                });
+            } else {
+                timelineHtml += `<li class="list-group-item text-center text-muted">Nenhum histórico de mudança de status.</li>`;
+            }
+            timelineHtml += '</ul>';
+
+            corpoModal.innerHTML = `${metricasHtml}${formHtml}<h5 class="mt-4"><i class="fa-solid fa-timeline me-2"></i>Linha do Tempo</h5>${timelineHtml}`;
+
+            // Lógica do Botão SALVAR
+            const btnSalvar = document.getElementById('btn-salvar-modal');
+            const novoBtnSalvar = btnSalvar.cloneNode(true);
+            btnSalvar.parentNode.replaceChild(novoBtnSalvar, btnSalvar);
+            novoBtnSalvar.addEventListener('click', async () => {
+                const resp = await fetch(`/api/chamados/${chamadoId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: document.getElementById('novo-status').value, observacao: document.getElementById('nova-observacao').value })
+                });
+                if(resp.ok) {
+                    modal.hide();
+                } else {
+                    alert('Falha ao atualizar o chamado. Verifique o console do servidor.');
+                }
+            });
+
+            // Lógica do Botão EXCLUIR
+            const modalFooter = document.querySelector('#modalChamado .modal-footer');
+            const btnExcluirAntigo = document.getElementById('btn-excluir-chamado');
+            if(btnExcluirAntigo) btnExcluirAntigo.remove();
+            const btnExcluir = document.createElement('button');
+            btnExcluir.id = 'btn-excluir-chamado';
+            btnExcluir.className = 'btn btn-danger me-auto';
+            btnExcluir.innerHTML = '<i class="fa-solid fa-trash me-2"></i>Excluir Chamado';
+            modalFooter.prepend(btnExcluir);
+            btnExcluir.addEventListener('click', async () => {
+                if (confirm(`Tem certeza que deseja excluir permanentemente o Chamado #${chamadoId}?`)) {
+                    const resp = await fetch(`/api/chamados/${chamadoId}`, { method: 'DELETE' });
+                    if (resp.ok) {
+                        modal.hide();
+                    } else {
+                        alert('Falha ao excluir o chamado.');
+                    }
+                }
+            });
+
+        } catch (error) {
+            corpoModal.innerHTML = `<div class="alert alert-danger">Erro ao carregar os detalhes do chamado: ${error.message}</div>`;
+        }
+    }
+
+    // --- LÓGICA SOCKET.IO ---
+    const socket = io();
+    socket.on('connect', () => console.log('✅ Conectado ao servidor real-time!'));
+    
+    socket.on('novo_chamado', (novoChamado) => {
+        todosChamados.unshift(novoChamado); 
+        atualizarDashboardCompleto();
+        notificationSound.play().catch(error => console.log("A reprodução de áudio foi bloqueada pelo navegador até que o usuário interaja com a página.", error));
     });
 
-    if (chartSetor) chartSetor.destroy();
-    if (chartTempo) chartTempo.destroy();
-
-    chartSetor = new Chart(document.getElementById("graficoSetor").getContext("2d"), {
-      type: 'pie',
-      data: {
-        labels: Object.keys(setores),
-        datasets: [{ data: Object.values(setores) }]
-      },
-      options: { plugins: { legend: { position: 'bottom' } } }
+    socket.on('chamado_atualizado', (chamadoAtualizado) => {
+        const index = todosChamados.findIndex(c => c.id === chamadoAtualizado.id);
+        if (index !== -1) todosChamados[index] = chamadoAtualizado;
+        atualizarDashboardCompleto();
     });
 
-    const media = tempos.length
-      ? (tempos.reduce((a,b)=>a+b,0)/tempos.length).toFixed(2)
-      : 0;
-    chartTempo = new Chart(document.getElementById("graficoTempo").getContext("2d"), {
-      type: 'bar',
-      data: {
-        labels: ['Tempo médio (min)'],
-        datasets: [{ label: 'Minutos', data: [media] }]
-      },
-      options: {
-        scales: { y: { beginAtZero: true } },
-        plugins: { legend: { display: false } }
-      }
+    socket.on('chamado_excluido', (data) => {
+        todosChamados = todosChamados.filter(c => c.id !== data.id);
+        atualizarDashboardCompleto();
     });
-  }
-
-  function renderizarTabela() {
-    const tabela = document.getElementById("tabela-chamados");
-    tabela.innerHTML = '';
-
-    const fs = document.getElementById("filtro-setor").value.toLowerCase();
-    const fst = document.getElementById("filtro-status").value.toLowerCase();
-    const fp = document.getElementById("filtro-prioridade").value.toLowerCase();
-    const fb = document.getElementById("filtro-busca").value.toLowerCase();
-
-    chamados.forEach((c, i) => {
-      const nome = (c.nome||'').toLowerCase();
-      const setor = (c.setor||'').toLowerCase();
-      const status = (c.status||'').toLowerCase();
-      const prio = (c.prioridade||'').toLowerCase();
-      const desc = (c.descricao||'').toLowerCase();
-
-      if (
-        (!fs || setor.includes(fs)) &&
-        (!fst || status.includes(fst)) &&
-        (!fp || prio.includes(fp)) &&
-        (!fb || nome.includes(fb) || setor.includes(fb) || desc.includes(fb))
-      ) {
-        const dataStr = c.criado_em ? new Date(c.criado_em).toLocaleString() : '';
-        tabela.innerHTML += `
-          <tr>
-            <td>${dataStr}</td>
-            <td>${c.nome||''}</td>
-            <td>${c.setor||''}</td>
-            <td>${c.prioridade||''}</td>
-            <td>${c.descricao||''}</td>
-            <td>${c.status||''}</td>
-            <td>${calcularTempo(c).tempoStr}</td>
-            <td>${c.observacao||''}</td>
-            <td>
-              <button class="btn btn-sm btn-outline-primary" onclick="abrirDetalhes(${i})">
-                <i class="fa fa-eye"></i> Ver detalhes
-              </button>
-            </td>
-          </tr>
-        `;
-      }
-    });
-  }
-
-  function abrirDetalhes(i) {
-    chamadoSelecionado = i;
-    const c = chamados[i];
-
-    document.getElementById('card-id').textContent = c.id||'---';
-    document.getElementById('card-nome').textContent = c.nome||'---';
-    document.getElementById('card-setor').textContent = c.setor||'---';
-    document.getElementById('card-prioridade-select').value = c.prioridade||'Baixa';
-    document.getElementById('card-desc').textContent = c.descricao||'---';
-    document.getElementById('card-data').textContent = c.criado_em
-      ? new Date(c.criado_em).toLocaleString() : '---';
-    document.getElementById('card-tempo').textContent = calcularTempo(c).tempoStr;
-    document.getElementById('card-observacao').value = c.observacao||'';
-
-    document.querySelectorAll('.timeline .step').forEach(s => s.classList.remove('active'));
-    if (c.status==='Pendente')     document.getElementById('card-step-iniciado').classList.add('active');
-    if (c.status==='Em andamento') document.getElementById('card-step-andamento').classList.add('active');
-    if (['Finalizado','Resolvido'].includes(c.status))
-      document.getElementById('card-step-concluido').classList.add('active');
-
-    new bootstrap.Modal(document.getElementById('modalChamado')).show();
-  }
-
-  carregarChamados();
 </script>
-
-<style>
-  .timeline {
-    display: flex;
-    justify-content: space-between;
-    border-top: 3px solid #ccc;
-    padding-top: 12px;
-    margin-top: 1rem;
-    cursor: pointer;
-  }
-  .timeline .step {
-    font-weight: 600;
-    position: relative;
-    text-align: center;
-    width: 33%;
-    padding-top: 20px;
-    transition: background 0.3s;
-  }
-  .timeline .step:hover {
-    background-color: #f8f9fa;
-  }
-  .timeline .step.active::before {
-    content: '✔';
-    position: absolute;
-    top: -14px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: white;
-    background-color: green;
-    border-radius: 50%;
-    border: 2px solid white;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-</style>
 {% endblock %}

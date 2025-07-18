@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: glpi_db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_pass
+      - MYSQL_DATABASE=glpi
+      - MYSQL_USER=glpi
+      - MYSQL_PASSWORD=glpi_pass
+    volumes:
+      - mysql-data:/var/lib/mysql
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
+  glpi:
+    image: diouxx/glpi:latest
+    container_name: glpi_app
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    ports:
+      - "8080:80"
+    environment:
+      - GLPI_DB_HOST=mysql
+      - GLPI_DB_NAME=glpi
+      - GLPI_DB_USER=glpi
+      - GLPI_DB_PASSWORD=glpi_pass
+      - GLPI_DB_PORT=3306
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
+volumes:
+  mysql-data:
+  grafana-data:
