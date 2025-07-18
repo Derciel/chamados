@@ -3,6 +3,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from flask_socketio import SocketIO
+from sqlalchemy.pool import NullPool
 
 # As instâncias continuam sendo criadas aqui, no escopo global.
 db = SQLAlchemy()
@@ -24,6 +25,9 @@ def create_app():
     
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", "uma-chave-secreta-forte-de-fallback")
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "poolclass": NullPool,
+    }
     
     # Inicialização dos componentes com o app factory
     db.init_app(app)
