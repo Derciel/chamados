@@ -1,17 +1,16 @@
 Flask
-Flask-Bcrypt
-Flask-SQLAlchemy
 gunicorn
-requests
-psycopg2
-requests
-llama-cpp-python
-pyngrok
-python-dotenv
-Flask-SocketIO
-googletrans==4.0.0-rc1
-Flask-Cors
-torch
-transformers
-accelerate
 eventlet
+Flask-SocketIO
+
+# Banco de Dados
+Flask-SQLAlchemy
+Flask-Bcrypt
+psycopg2-binary  # Para PostgreSQL em produção
+alembic
+Flask-Migrate
+
+# API e Utilitários
+Flask-Cors
+requests
+python-dotenv
