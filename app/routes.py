@@ -316,20 +316,23 @@ def reset_password():
 
 @bp.route('/api/chamados/<int:id>/historico', methods=['GET'])
 def historico_chamado(id):
-    if 'email' not in session or session.get('email') != 'adm@adm':
-        return jsonify({'erro': 'Acesso não autorizado'}), 403
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Acesso não autorizado'}), 403
 
-    historico = HistoricoChamado.query.filter_by(chamado_id=id).order_by(HistoricoChamado.timestamp.asc()).all()
-
-    return jsonify([
-        {
-            'id': h.id,
-            'de': h.valor_anterior,
-            'para': h.valor_novo,
-            'timestamp': h.timestamp.isoformat() + 'Z',
-            'observacao': h.observacao
-        } for h in historico
-    ])
+    try:
+        historico = HistoricoChamado.query.filter_by(chamado_id=id).order_by(HistoricoChamado.timestamp.asc()).all()
+        return jsonify([
+            {
+                'id': h.id,
+                'de': h.valor_anterior,
+                'para': h.valor_novo,
+                'timestamp': h.timestamp.isoformat() + 'Z',
+                'observacao': h.observacao
+            } for h in historico
+        ])
+    except Exception as e:
+        logging.error(f"Erro ao buscar histórico do chamado {id}: {e}")
+        return jsonify({'error': 'Erro interno ao buscar histórico.'}), 500
     
 @bp.route('/api/estatisticas/tempo-por-etapa')
 def tempo_por_etapa():
@@ -365,31 +368,32 @@ def tempo_por_etapa():
 
 @bp.route('/api/chamados/<int:id>/metricas')
 def metricas_chamado(id):
-    if 'email' not in session or session.get('email') != 'adm@adm':
-        return jsonify({'erro': 'Acesso não autorizado'}), 403
+    if session.get('role') != 'admin':
+        return jsonify({'error': 'Acesso não autorizado'}), 403
 
-    chamado = Chamado.query.get_or_404(id)
-    
-    # 1. Cálculo do Tempo Total de Resolução (em minutos)
-    tempo_resolucao_minutos = 0
-    if chamado.criado_em and chamado.concluido_em:
-        delta = chamado.concluido_em - chamado.criado_em
-        tempo_resolucao_minutos = round(delta.total_seconds() / 60)
+    try:
+        chamado = Chamado.query.get_or_404(id)
+        
+        tempo_resolucao_minutos = 0
+        if chamado.criado_em and chamado.concluido_em:
+            delta = chamado.concluido_em - chamado.criado_em
+            tempo_resolucao_minutos = round(delta.total_seconds() / 60)
 
-    # 2. Cálculo do Tempo Total em Status "Pendente" (em minutos)
-    historico = HistoricoChamado.query.filter_by(chamado_id=id).order_by(HistoricoChamado.timestamp.asc()).all()
-    tempo_pendente_segundos = 0
-    for i, item in enumerate(historico):
-        if item.valor_novo == 'Pendente':
-            # Se não for o último item do histórico, calcula a duração até o próximo evento
-            if i + 1 < len(historico):
-                proximo_item = historico[i+1]
-                delta_pendente = proximo_item.timestamp - item.timestamp
-                tempo_pendente_segundos += delta_pendente.total_seconds()
+        historico = HistoricoChamado.query.filter_by(chamado_id=id).order_by(HistoricoChamado.timestamp.asc()).all()
+        tempo_pendente_segundos = 0
+        for i, item in enumerate(historico):
+            if item.valor_novo == 'Pendente':
+                if i + 1 < len(historico):
+                    proximo_item = historico[i+1]
+                    delta_pendente = proximo_item.timestamp - item.timestamp
+                    tempo_pendente_segundos += delta_pendente.total_seconds()
 
-    tempo_pendente_minutos = round(tempo_pendente_segundos / 60)
+        tempo_pendente_minutos = round(tempo_pendente_segundos / 60)
 
-    return jsonify({
-        'tempo_total_resolucao_minutos': tempo_resolucao_minutos,
-        'tempo_total_pendente_minutos': tempo_pendente_minutos
-    })
+        return jsonify({
+            'tempo_total_resolucao_minutos': tempo_resolucao_minutos,
+            'tempo_total_pendente_minutos': tempo_pendente_minutos
+        })
+    except Exception as e:
+        logging.error(f"Erro ao calcular métricas do chamado {id}: {e}")
+        return jsonify({'error': 'Erro interno ao calcular métricas.'}), 500
