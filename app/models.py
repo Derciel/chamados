@@ -21,6 +21,7 @@ class Chamado(db.Model):
     status = db.Column(db.String(20), default='Aberto')
     imagem_url = db.Column(db.String(200))
     observacao = db.Column(db.Text)
+    sistema_origem = db.Column(db.String(20), default='novo', nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
     funcionario_id = db.Column(db.Integer)
     notificado = db.Column(db.Boolean, default=False)
