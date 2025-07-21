@@ -1,0 +1,197 @@
+<style>
+    #chatbot-fab {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 64px;
+        height: 64px;
+        background-color: #0d6efd;
+        color: white;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s ease, background-color 0.2s ease;
+        z-index: 1000;
+    }
+
+    #chatbot-fab:hover {
+        transform: scale(1.1);
+        background-color: #0b5ed7;
+    }
+
+    #chatbot-window {
+        position: fixed;
+        bottom: 100px;
+        right: 20px;
+        width: 350px;
+        height: 500px;
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+        display: none; /* Começa escondido */
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 1000;
+        border: 1px solid #e0e0e0;
+    }
+
+    #chatbot-window.visible {
+        display: flex;
+    }
+
+    #chatbot-header {
+        background-color: #0d6efd;
+        color: white;
+        padding: 1rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+    }
+
+    #chatbot-messages {
+        flex-grow: 1;
+        padding: 1rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .chat-message {
+        padding: 0.5rem 0.75rem;
+        border-radius: 18px;
+        max-width: 80%;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .chat-message.user {
+        background-color: #0d6efd;
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 4px;
+    }
+
+    .chat-message.bot {
+        background-color: #e9ecef;
+        color: #333;
+        align-self: flex-start;
+        border-bottom-left-radius: 4px;
+    }
+
+    #chatbot-input-form {
+        display: flex;
+        padding: 0.75rem;
+        border-top: 1px solid #e0e0e0;
+        gap: 0.5rem;
+    }
+
+    #chatbot-input-form input {
+        flex-grow: 1;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        outline: none;
+    }
+
+    #chatbot-input-form button {
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        border: none;
+        background-color: #0d6efd;
+        color: white;
+        cursor: pointer;
+    }
+</style>
+
+<div id="chatbot-fab">
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"></path></svg>
+</div>
+
+<div id="chatbot-window">
+    <div id="chatbot-header">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M12 8V4H8"/><rect x="8" y="16" width="8" height="4"/><path d="M5 16H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2"/><path d="M17 12h-2.5a1.5 1.5 0 0 0 0 3h1a1.5 1.5 0 0 1 0 3H12"/><path d="M8 12h1"/></svg>
+        Assistente Virtual
+    </div>
+    <div id="chatbot-messages">
+        <div class="chat-message bot">Olá! Como posso te ajudar hoje?</div>
+    </div>
+    <form id="chatbot-input-form">
+        <input type="text" id="chatbot-input-text" placeholder="Digite sua mensagem..." autocomplete="off">
+        <button type="submit">
+             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+    </form>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const fab = document.getElementById('chatbot-fab');
+        const window = document.getElementById('chatbot-window');
+        const form = document.getElementById('chatbot-input-form');
+        const input = document.getElementById('chatbot-input-text');
+        const messagesContainer = document.getElementById('chatbot-messages');
+
+        // Alterna a visibilidade da janela
+        fab.addEventListener('click', () => {
+            window.classList.toggle('visible');
+        });
+
+        // Envia a mensagem
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userMessage = input.value.trim();
+            if (userMessage === '') return;
+
+            addMessage(userMessage, 'user');
+            input.value = '';
+            
+            addMessage('Digitando...', 'bot', true); // Adiciona "Digitando..."
+
+            try {
+                // ✅ SUBSTITUA PELA URL DO SEU BACKEND DE IA
+                const response = await fetch('http://localhost:5000/api/chatbot', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userMessage })
+                });
+
+                if (!response.ok) throw new Error('Falha na resposta da API');
+
+                const data = await response.json();
+                
+                removeTypingIndicator(); // Remove "Digitando..."
+                addMessage(data.reply, 'bot'); // Adiciona a resposta da IA
+
+            } catch (error) {
+                console.error("Erro no chatbot:", error);
+                removeTypingIndicator(); // Remove "Digitando..."
+                addMessage('Desculpe, estou com problemas. Tente novamente.', 'bot');
+            }
+        });
+
+        // Função para adicionar uma mensagem na tela
+        function addMessage(text, sender, isTyping = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${sender}`;
+            if (isTyping) {
+                messageDiv.id = 'typing-indicator';
+            }
+            messageDiv.textContent = text;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight; // Rola para o final
+        }
+        
+        // Função para remover o indicador "Digitando..."
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+    });
+</script>
