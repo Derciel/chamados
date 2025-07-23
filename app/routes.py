@@ -270,22 +270,22 @@ def marcar_notificacao(id):
     db.session.commit()
     return jsonify({"mensagem": "Notificação marcada"}), 200
 
-@bp.route('/meus-chamados-resolvidos', endpoint='meus_chamados_resolvidos')
-def meus_chamados_resolvidos():
+@bp.route('/meus-chamados')
+def meus_chamados():
     if 'usuario_id' not in session:
         flash('Faça login para ver seus chamados.', 'warning')
         return redirect(url_for('routes_bp.login'))
 
     usuario_id = session['usuario_id']
-    
     status_visiveis = ["Aberto", "Em andamento", "Pendente", "Finalizado", "Resolvido", "Concluído"]
     
     chamados = Chamado.query.filter(
         Chamado.user_id == usuario_id,
         Chamado.status.in_(status_visiveis)
-    ).order_by(Chamado.concluido_em.desc()).all()
+    ).order_by(Chamado.criado_em.desc()).all()
 
-    return render_template('chamados_resolvidos.html', chamados=chamados)
+    
+    return render_template('meus_chamados.html', chamados=chamados
 
 @bp.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
