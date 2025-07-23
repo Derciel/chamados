@@ -5,20 +5,17 @@
 <div class="container py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="form-title text-center mb-0">📨 Abrir Novo Chamado</h4>
-        <!-- Ajuste no blueprint -->
-        <a href="{{ url_for('routes_bp.meus_chamados_resolvidos') }}" class="btn btn-secondary">
-            <i class="fa-solid fa-check-circle me-1"></i> Chamados Finalizados
+        <a href="{{ url_for('routes_bp.meus_chamados') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-list-check me-1"></i> Meus Chamados
         </a>
     </div>
 
     <form method="POST">
-      <!-- Nome -->
       <div class="mb-3">
         <label class="form-label">Nome</label>
-        <input type="text" name="nome" class="form-control" placeholder="Digite seu nome" required>
+        <input type="text" name="nome" class="form-control" placeholder="Digite seu nome completo" required>
       </div>
 
-      <!-- Setor -->
       <div class="mb-3">
         <label class="form-label">Setor</label>
         <select name="setor" class="form-select" required>
@@ -40,19 +37,16 @@
         </select>
       </div>
 
-      <!-- Descrição -->
       <div class="mb-3">
         <label class="form-label">Descrição do chamado</label>
-        <textarea name="descricao" class="form-control" rows="4" placeholder="Descreva o problema..." required></textarea>
+        <textarea name="descricao" class="form-control" rows="4" placeholder="Descreva o problema ou solicitação em detalhes..." required></textarea>
       </div>
 
-      <!-- Imagem -->
       <div class="mb-3">
-        <label class="form-label">ANYDESK</label>
-        <textarea name="descricao" class="form-control" placeholder="Cole seu anydesk aqui" required></textarea>
+        <label class="form-label">AnyDesk (Opcional)</label>
+        <input type="text" name="anydesk" class="form-control" placeholder="Ex: 123 456 789">
       </div>
 
-      <!-- Botão -->
       <div class="d-grid mt-4">
         <button type="submit" class="btn btn-primary">
           <i class="fa-solid fa-paper-plane me-1"></i> Enviar chamado
@@ -61,121 +55,6 @@
     </form>
 </div>
 
-<!-- Chatbot com botão recolher -->
-<style>
-  #chatbot-toggle {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 10000;
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    box-shadow: 0 0 10px rgba(0,0,0,0.15);
-  }
-
-  #chatbot-box {
-    position: fixed;
-    bottom: 70px;
-    right: 20px;
-    width: 320px;
-    max-height: 500px;
-    background: white;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    box-shadow: 0 0 12px rgba(0,0,0,0.1);
-    z-index: 9999;
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    font-size: 14px;
-  }
-
-  #chatbot-header {
-    background: #007bff;
-    color: white;
-    padding: 10px;
-    font-weight: bold;
-    text-align: center;
-  }
-
-  #chatbot-messages {
-    flex: 1;
-    padding: 10px;
-    overflow-y: auto;
-  }
-
-  #chatbot-input {
-    display: flex;
-    border-top: 1px solid #ccc;
-  }
-
-  #chatbot-input input {
-    flex: 1;
-    border: none;
-    padding: 10px;
-    outline: none;
-  }
-
-  #chatbot-input button {
-    border: none;
-    background: #007bff;
-    color: white;
-    padding: 10px 15px;
-    cursor: pointer;
-  }
-</style>
-
-<button id="chatbot-toggle" onclick="toggleChatbot()">Ajuda</button>
-
-<div id="chatbot-box">
-  <div id="chatbot-header"> Ajuda com IA </div>
-  <div id="chatbot-messages"></div>
-  <div id="chatbot-input">
-    <input type="text" id="chatbot-question" placeholder="Digite sua dúvida..." />
-    <button onclick="enviarChat()">⏎</button>
-  </div>
-</div>
-
-<script>
-  function toggleChatbot() {
-    const box = document.getElementById("chatbot-box");
-    box.style.display = box.style.display === "flex" ? "none" : "flex";
-  }
-
-  async function enviarChat() {
-    const input = document.getElementById("chatbot-question");
-    const messages = document.getElementById("chatbot-messages");
-
-    const pergunta = input.value.trim();
-    if (!pergunta) return;
-
-    messages.innerHTML += `<div><strong>Você:</strong> ${pergunta}</div>`;
-    input.value = "";
-    messages.innerHTML += `<div><em>Respondendo...</em></div>`;
-    messages.scrollTop = messages.scrollHeight;
-
-    try {
-      const res = await fetch("http://127.0.0.1:5000", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: pergunta })
-      });
-
-      const data = await res.json();
-      const resposta = data.answer || data.error || "Erro na resposta.";
-      messages.innerHTML += `<div><strong>LLaMA:</strong> ${resposta}</div>`;
-      messages.scrollTop = messages.scrollHeight;
-    } catch (err) {
-      messages.innerHTML += `<div><strong>Erro:</strong> Falha na requisição.</div>`;
-    }
-  }
-</script>
-
-
+{% include 'includes/chatbot.html' %}
 
 {% endblock %}
