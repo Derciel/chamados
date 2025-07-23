@@ -40,31 +40,33 @@ def dashboard():
 # ROTA '/novo-chamado' ADICIONADA PARA CORRIGIR O ERRO
 @bp.route('/novo-chamado', methods=['GET', 'POST'])
 def novo_chamado():
-    """
-    Rota para usuários criarem um novo chamado.
-    """
     if 'usuario_id' not in session:
         flash('Faça login para abrir um chamado.', 'warning')
         return redirect(url_for('routes_bp.login'))
 
     if request.method == 'POST':
-        novo_chamado_obj = Chamado(
-            nome=request.form.get('nome'),
-            setor=request.form.get('setor'),
-            descricao=request.form.get('descricao'),
-            status='Aberto',
-            user_id=session['usuario_id'],
-            funcionario_id=session.get('funcionario_id')
-        )
-        
-        # Aqui você pode adicionar a lógica de upload de imagem se necessário
-        # ...
-        
-        db.session.add(novo_chamado_obj)
-        db.session.commit()
-        
-        flash("Chamado registrado com sucesso!", "success")
-        return redirect(url_for('routes_bp.novo_chamado'))
+        try:
+            novo_chamado_obj = Chamado(
+                nome=request.form.get('nome'),
+                setor=request.form.get('setor'),
+                descricao=request.form.get('descricao'),
+                anydesk=request.form.get('anydesk'),
+                status='Aberto',
+                user_id=session['usuario_id'],
+                funcionario_id=session.get('funcionario_id'),
+                sistema_origem='novo'
+            )
+            
+            db.session.add(novo_chamado_obj)
+            db.session.commit()
+            
+            flash("Chamado registrado com sucesso!", "success")
+            return redirect(url_for('routes_bp.novo_chamado'))
+
+        except Exception as e:
+            db.session.rollback()
+            logging.error(f"Erro ao criar novo chamado: {e}")
+            flash("Ocorreu um erro ao registrar o chamado. Tente novamente.", "danger")
 
     return render_template('novo_chamado.html')
 
