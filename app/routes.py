@@ -285,7 +285,7 @@ def meus_chamados():
     ).order_by(Chamado.criado_em.desc()).all()
 
     
-    return render_template('meus_chamados.html', chamados=chamados
+    return render_template('meus_chamados.html', chamados=chamados)
 
 @bp.route('/reset-password', methods=['GET', 'POST'])
 def reset_password():
