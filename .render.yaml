@@ -1,15 +1,16 @@
-# render.yaml
+# .render.yaml
 services:
   - type: web
     name: sistema-chamados-nicopel
     env: python
-    plan: free 
-    region: oregon 
+    plan: starter # Recomendo o plano 'starter' para evitar que o serviço durma
+    region: oregon
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn --worker-class eventlet -w 1 wsgi:app"
+    # ✅ CORREÇÃO: O comando agora executa nosso script 'run.py'
+    startCommand: "python run.py"
     buildFilter:
       paths:
         - "app/**"
         - "migrations/**"
         - "requirements.txt"
-        - "wsgi.py"
+        - "run.py" # Adiciona o novo arquivo ao filtro
