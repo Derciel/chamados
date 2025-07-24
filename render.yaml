@@ -13,5 +13,5 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.0
       # ✅ Adicione sua chave Gemini aqui no painel da Render
-      - key: GEMINI_API_KEY
+      - key: key
         sync: false
