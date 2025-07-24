@@ -8,8 +8,10 @@ services:
     plan: free
     region: oregon
     buildCommand: "pip install -r requirements.txt"
+  
     # ✅ CORREÇÃO: Comando ajustado para o novo nome do arquivo.
     startCommand: "gunicorn run:app --timeout 120"
+    startCommand: "flask db upgrade && python run.py"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
