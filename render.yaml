@@ -1,17 +1,18 @@
-# render.yaml
+# render.yaml (para o serviço de IA)
 services:
   - type: web
     name: ia-chatbot-nicopel
     env: python
-    # IMPORTANTE: O plano gratuito pode não ter RAM suficiente.
+    # O plano gratuito pode não ter RAM suficiente.
     # Considere o plano "Starter" ou superior para rodar o modelo.
     plan: free
-    region: oregon # ou uma região de sua preferência
+    region: oregon
     buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn app:app --timeout 120"
+    # ✅ CORREÇÃO: Comando ajustado para o novo nome do arquivo.
+    startCommand: "gunicorn server:app --timeout 120"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      # ✅ Adicione sua chave Gemini aqui no painel da Render
+      # Adicione sua chave Gemini aqui no painel da Render
       - key: key
         sync: false
