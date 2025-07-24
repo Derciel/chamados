@@ -1,39 +1,25 @@
-# run.py (Corrected for dotenv)
+# run.py
 
+import eventlet
 import os
-import socket
-from dotenv import load_dotenv # Add this import!
 
-# --- Load environment variables from .env file FIRST ---
-load_dotenv() # This line must come before anything that tries to read os.getenv/os.environ
-# --- End .env loading ---
+# ESSENCIAL: Modifica as bibliotecas padrão do Python para serem assíncronas.
+# Deve ser a primeira coisa a ser executada no seu app.
+eventlet.monkey_patch()
 
+# AGORA, e somente agora, importe a factory da sua aplicação e o objeto socketio.
 from app import create_app, socketio
-# from app import events  # Ensure events are imported/registered as needed
 
+# Cria a instância da aplicação que o servidor irá rodar.
 app = create_app()
 
-def porta_disponivel(porta):
-    """Verifica se a porta está disponível."""
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        try:
-            s.bind(('', porta))
-            return True
-        except OSError:
-            return False
+# Importa os eventos do SocketIO para que sejam registrados corretamente.
+from app import events
 
+# Este bloco é apenas para desenvolvimento local e não é usado na Render.
 if __name__ == '__main__':
-    porta_inicial = int(os.environ.get('PORT', 5000))
-    porta = porta_inicial
-
-    while not porta_disponivel(porta) and porta < 5010: # Adjust upper limit if needed
-        porta += 1
-
-    if not porta_disponivel(porta):
-        print(f"❌ Nenhuma porta disponível entre {porta_inicial} e {porta-1}.")
-        exit(1)
-
-    print(f"🚀 Iniciando servidor Flask-SocketIO na porta {porta}...")
-    print(f"🌐 Acesse: http://localhost:{porta}")
-
-    socketio.run(app, host='0.0.0.0', port=porta, debug=True)
+    # Obtém a porta da variável de ambiente, com um padrão de 8080.
+    port = int(os.environ.get('PORT', 5000))
+    print(f"🚀 Iniciando servidor de desenvolvimento na porta {port}...")
+    # Use o socketio.run para rodar o servidor de desenvolvimento compatível.
+    socketio.run(app, host='0.0.0.0', port=port, debug=True)
