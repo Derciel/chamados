@@ -1,99 +1,162 @@
 {% extends "base.html" %}
-{% block title %}Dashboard Operacional Real-Time{% endblock %}
+{% block title %}Command Center de Chamados{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Estilos para o tema claro e escuro */
+    :root {
+        --card-bg-light: rgba(255, 255, 255, 0.7);
+        --card-bg-dark: rgba(43, 49, 59, 0.7);
+        --card-border-light: rgba(0, 0, 0, 0.1);
+        --card-border-dark: rgba(255, 255, 255, 0.2);
+    }
+    html[data-theme="dark"] body {
+        color: #e5e7eb;
+    }
+    .kpi-card, .main-card {
+        background-color: var(--card-bg-light);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--card-border-light);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .kpi-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1) !important;
+    }
+    html[data-theme="dark"] .kpi-card,
+    html[data-theme="dark"] .main-card {
+        background-color: var(--card-bg-dark);
+        border: 1px solid var(--card-border-dark);
+    }
+    .kpi-card .trend { font-size: 0.9rem; }
+
+    .table-hover tbody tr.chamado-row { transition: background-color 0.2s ease; cursor: pointer; }
+    html[data-theme="dark"] .table-hover tbody tr.chamado-row:hover { background-color: rgba(255, 255, 255, 0.05); }
+
+    .chamado-details-row td { padding: 0 !important; border: 0 !important; }
+    .chamado-details-content { background-color: rgba(0,0,0,0.02); padding: 1.25rem; border-top: 1px solid #dee2e6; }
+    html[data-theme="dark"] .chamado-details-content { background-color: rgba(0,0,0,0.2); border-top: 1px solid var(--card-border-dark); }
+
+    .user-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        background-color: #0d6efd; color: white;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-weight: bold; margin-right: 12px; flex-shrink: 0;
+    }
+    .status-pill {
+        padding: 0.3em 0.8em; border-radius: 12px; font-size: 0.85em;
+        font-weight: 500; display: inline-flex; align-items: center; gap: 0.5em;
+    }
+    .tempo-aberto-col {
+        font-family: 'Courier New', Courier, monospace;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 <h3 class="form-title text-center mb-4">
-  <i class="fa-solid fa-satellite-dish me-2"></i> Dashboard Operacional Real-Time
+  <i class="fa-solid fa-satellite-dish me-2"></i> Command Center Operacional
 </h3>
+
 <div class="row">
-  <div class="col-lg-3 col-md-6 mb-4">
-    <div class="card shadow-sm text-center h-100">
-      <div class="card-body d-flex flex-column justify-content-center">
-        <h5 class="card-title">Chamados Abertos</h5>
-        <p class="card-text fs-2 fw-bold" id="kpi-abertos">0</p>
-      </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100 kpi-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title text-muted">Abertos</h5>
+                    <i class="fa-solid fa-fire text-danger fs-4"></i>
+                </div>
+                <p class="card-text display-4 fw-bold" id="kpi-abertos">0</p>
+                <div class="trend text-success">▲ 5% vs ontem</div>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="col-lg-3 col-md-6 mb-4">
-    <div class="card shadow-sm text-center h-100">
-      <div class="card-body d-flex flex-column justify-content-center">
-        <h5 class="card-title">Em Andamento</h5>
-        <p class="card-text fs-2 fw-bold" id="kpi-andamento">0</p>
-      </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100 kpi-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title text-muted">Em Andamento</h5>
+                    <i class="fa-solid fa-person-digging text-warning fs-4"></i>
+                </div>
+                <p class="card-text display-4 fw-bold" id="kpi-andamento">0</p>
+                <div class="trend text-danger">▼ 2% vs ontem</div>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="col-lg-3 col-md-6 mb-4">
-    <div class="card shadow-sm text-center h-100">
-      <div class="card-body d-flex flex-column justify-content-center">
-        <h5 class="card-title">Pendentes</h5>
-        <p class="card-text fs-2 fw-bold" id="kpi-pendentes">0</p>
-      </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100 kpi-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title text-muted">Pendentes</h5>
+                    <i class="fa-solid fa-clock text-secondary fs-4"></i>
+                </div>
+                <p class="card-text display-4 fw-bold" id="kpi-pendentes">0</p>
+                <div class="trend text-success">▲ 10% vs ontem</div>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="col-lg-3 col-md-6 mb-4">
-    <div class="card shadow-sm text-center h-100">
-      <div class="card-body d-flex flex-column justify-content-center">
-        <h5 class="card-title">Finalizados Hoje</h5>
-        <p class="card-text fs-2 fw-bold" id="kpi-finalizados-hoje">0</p>
-      </div>
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100 kpi-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title text-muted">Finalizados Hoje</h5>
+                    <i class="fa-solid fa-circle-check text-success fs-4"></i>
+                </div>
+                <p class="card-text display-4 fw-bold" id="kpi-finalizados-hoje">0</p>
+                <div class="trend text-success">▲ 8% vs ontem</div>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
+
 <div class="row">
   <div class="col-lg-6 mb-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-header fw-bold">Chamados por Status</div>
+    <div class="card shadow-sm h-100 main-card">
+      <div class="card-header fw-bold bg-transparent border-bottom-0">Chamados por Status</div>
       <div class="card-body">
         <canvas id="grafico-status"></canvas>
       </div>
     </div>
   </div>
   <div class="col-lg-6 mb-4">
-    <div class="card shadow-sm h-100">
-      <div class="card-header fw-bold">Chamados por Setor</div>
+    <div class="card shadow-sm h-100 main-card">
+      <div class="card-header fw-bold bg-transparent border-bottom-0">Chamados por Setor</div>
       <div class="card-body">
         <canvas id="grafico-setor"></canvas>
       </div>
     </div>
   </div>
 </div>
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
-        <h5 class="card-title mb-3"><i class="fa-solid fa-filter me-2"></i>Filtros e Pesquisa</h5>
-        <div class="row g-3 align-items-end">
-            <div class="col-md-3">
-                <label for="filtro-setor" class="form-label">Setor</label>
-                <select id="filtro-setor" class="form-select"></select>
-            </div>
-            <div class="col-md-3">
-                <label for="filtro-status" class="form-label">Status</label>
-                <select id="filtro-status" class="form-select"></select>
-            </div>
-            <div class="col-md-4">
-                <label for="filtro-busca" class="form-label">Busca Livre</label>
-                <input type="text" id="filtro-busca" class="form-control" placeholder="Nome, setor, descrição...">
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-outline-secondary w-100" id="btn-limpar-filtros">
-                    <i class="fa-solid fa-eraser me-2"></i>Limpar
-                </button>
-            </div>
+
+<div class="card shadow-sm mb-4 main-card">
+    <div class="card-header bg-transparent d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h5 class="mb-0"><i class="fa-solid fa-table-list me-2"></i>Tabela de Chamados</h5>
+        <div class="d-flex align-items-center gap-2">
+            <input type="text" id="filtro-busca" class="form-control form-control-sm" placeholder="Busca livre...">
+            <select id="filtro-setor" class="form-select form-select-sm"></select>
+            <select id="filtro-status" class="form-select form-select-sm"></select>
+            <button class="btn btn-outline-secondary btn-sm" id="btn-limpar-filtros" title="Limpar Filtros">
+                <i class="fa-solid fa-eraser"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle mb-0" id="tabela-chamados">
+                <thead>
+                    <tr>
+                        <th class="ps-3">ID</th> <th>Abertura</th> <th>Solicitante</th> <th>Setor</th>
+                        <th>Status</th> <th>Tempo Aberto</th> <th class="text-end pe-3">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="corpo-tabela-chamados"></tbody>
+            </table>
         </div>
     </div>
 </div>
-<h4 class="mt-4 mb-3" id="titulo-tabela"><i class="fa-solid fa-table-list me-2"></i>Tabela de Chamados</h4>
-<div class="table-responsive mb-5">
-    <table class="table table-bordered table-hover table-sm table-striped" id="tabela-chamados">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th> <th>Abertura</th> <th>Nome</th> <th>Setor</th>
-                <th>Descrição</th> <th>Status</th> <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody id="corpo-tabela-chamados"></tbody>
-    </table>
-</div>
-<div class="modal fade" id="modalChamado" tabindex="-1" aria-labelledby="modal-titulo" aria-hidden="true">
+
+<div class="modal fade" id="modalChamado" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
@@ -118,7 +181,7 @@
     // --- VARIÁVEIS GLOBAIS E CONFIGURAÇÃO ---
     let todosChamados = [];
     let graficoStatus, graficoSetor;
-    let ultimoBotaoFocado = null;
+    let clockInterval = null;
     let audioDesbloqueado = false;
     const notificationSound = new Audio("{{ url_for('static', filename='sounds/msn_notification.mp3') }}");
 
@@ -127,81 +190,198 @@
         inicializarGraficos();
         carregarDadosIniciais();
         adicionarListenersDeFiltro();
-        adicionarListenerDeModal();
+        adicionarListenerTabela();
         desbloquearAudioComInteracao();
-        // A lógica de notificação do navegador foi movida para o 'base.html' para evitar duplicação.
     });
 
-    /**
-     * ✅ CORREÇÃO: Espera o primeiro clique do usuário para "desbloquear" o áudio.
-     * Esta versão é mais robusta.
-     */
+    // --- SOCKET.IO ---
+    const socket = io();
+    socket.on('connect', () => console.log('✅ Conectado ao servidor real-time!'));
+    socket.on('novo_chamado', (novoChamado) => {
+        todosChamados.unshift(novoChamado);
+        atualizarDashboardCompleto();
+        notificationSound.play().catch(e => {});
+    });
+    socket.on('chamado_atualizado', (chamadoAtualizado) => {
+        const index = todosChamados.findIndex(c => c.id === chamadoAtualizado.id);
+        if (index !== -1) {
+            if (todosChamados[index].status !== chamadoAtualizado.status) {
+                notificationSound.play().catch(e => {});
+            }
+            todosChamados[index] = chamadoAtualizado;
+        }
+        atualizarDashboardCompleto();
+    });
+    socket.on('chamado_excluido', (data) => {
+        todosChamados = todosChamados.filter(c => c.id !== data.id);
+        atualizarDashboardCompleto();
+    });
+
+    // --- LÓGICA DE INTERATIVIDADE DA TABELA ---
+    function adicionarListenerTabela() {
+        document.getElementById('corpo-tabela-chamados').addEventListener('click', function(event) {
+            const target = event.target;
+            const row = target.closest('tr.chamado-row');
+            if (!row) return;
+
+            if (target.closest('.btn-gerenciar')) {
+                event.stopPropagation();
+                const chamadoId = parseInt(row.dataset.chamadoId, 10);
+                abrirDetalhesModal(chamadoId);
+                return;
+            }
+            
+            const detailsRow = document.getElementById(`details-for-${row.id}`);
+            document.querySelectorAll('.chamado-details-row').forEach(el => {
+                if (el.id !== `details-for-${row.id}`) el.remove();
+            });
+
+            if (detailsRow) {
+                detailsRow.remove();
+            } else {
+                const chamadoId = parseInt(row.dataset.chamadoId, 10);
+                const chamado = todosChamados.find(c => c.id === chamadoId);
+                if (chamado) {
+                    const newDetailsRow = document.createElement('tr');
+                    newDetailsRow.className = 'chamado-details-row';
+                    newDetailsRow.id = `details-for-${row.id}`;
+                    newDetailsRow.innerHTML = `
+                        <td colspan="7" class="chamado-details-content">
+                            <strong>Descrição Completa:</strong>
+                            <p class="text-muted small mb-0">${chamado.descricao || 'Nenhuma descrição fornecida.'}</p>
+                        </td>
+                    `;
+                    row.insertAdjacentElement('afterend', newDetailsRow);
+                }
+            }
+        });
+    }
+
+    // --- RENDERIZAÇÃO E ATUALIZAÇÕES DE UI ---
+    function atualizarDashboardCompleto() {
+        renderizarTabela(todosChamados);
+        atualizarKPIs(todosChamados);
+        atualizarGraficos(todosChamados);
+        atualizarFiltros(todosChamados);
+    }
+
+    function renderizarTabela(chamados) {
+        const corpoTabela = document.getElementById("corpo-tabela-chamados");
+        const filtroSetor = document.getElementById("filtro-setor").value;
+        const filtroStatus = document.getElementById("filtro-status").value;
+        const filtroBusca = document.getElementById("filtro-busca").value.toLowerCase();
+        const chamadosFiltrados = chamados.filter(c =>
+            (!filtroSetor || c.setor === filtroSetor) &&
+            (!filtroStatus || c.status === filtroStatus) &&
+            (!filtroBusca || (c.nome || '').toLowerCase().includes(filtroBusca) || (c.descricao || '').toLowerCase().includes(filtroBusca) || (c.setor || '').toLowerCase().includes(filtroBusca))
+        );
+
+        corpoTabela.innerHTML = '';
+        if (chamadosFiltrados.length === 0) {
+            corpoTabela.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-muted">Nenhum chamado encontrado.</td></tr>`;
+            return;
+        }
+
+        chamadosFiltrados.forEach(c => {
+            const dataStr = formatarData(c.criado_em);
+            const statusPill = criarStatusPill(c.status);
+            const avatar = criarAvatar(c.nome);
+            let tempoAbertoHtml = '<span class="text-muted">--:--:--</span>';
+            if (['Aberto', 'Em andamento'].includes(c.status)) {
+                tempoAbertoHtml = `<span class="relogio-chamado" data-criado-em="${c.criado_em}">--:--:--</span>`;
+            } else if (c.criado_em && c.concluido_em) {
+                tempoAbertoHtml = `<span class="text-success">${formatarDuracaoTotal(c.criado_em, c.concluido_em)}</span>`;
+            }
+            const rowHtml = `
+              <tr id="chamado-row-${c.id}" class="chamado-row" data-chamado-id="${c.id}">
+                <td class="ps-3">${c.id}</td>
+                <td>${dataStr}</td>
+                <td class="d-flex align-items-center">${avatar}<span>${c.nome}</span></td>
+                <td>${c.setor}</td>
+                <td>${statusPill}</td>
+                <td class="tempo-aberto-col">${tempoAbertoHtml}</td>
+                <td class="text-end pe-3">
+                    <button class="btn btn-sm btn-primary btn-gerenciar">
+                        <i class="fa-solid fa-pen-to-square"></i> Gerenciar
+                    </button>
+                </td>
+              </tr>`;
+            corpoTabela.innerHTML += rowHtml;
+        });
+
+        iniciarRelogios();
+    }
+
+    // --- FUNÇÕES AUXILIARES ---
+    function formatarData(dataString) {
+        if (!dataString) return 'N/A';
+        return new Date(dataString).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    }
+    function criarAvatar(nome) {
+        const iniciais = (nome || '??').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+        return `<div class="user-avatar">${iniciais}</div>`;
+    }
+    function criarStatusPill(status) {
+        const cor = obterCorStatus(status);
+        const icone = obterIconeStatus(status);
+        const corTexto = ['Em andamento'].includes(status) ? 'text-dark' : 'text-white';
+        return `<span class="status-pill ${corTexto}" style="background-color: ${cor};"><i class="${icone}"></i> ${status}</span>`;
+    }
+    function obterCorStatus(status) {
+        const cores = { 'Aberto': '#dc3545', 'Em andamento': '#ffc107', 'Pendente': '#6c757d', 'Finalizado': '#198754', 'Resolvido': '#198754', 'Concluído': '#198754' };
+        return cores[status] || '#0d6efd';
+    }
+    function obterIconeStatus(status) {
+        const icones = { 'Aberto': 'fa-solid fa-fire', 'Em andamento': 'fa-solid fa-person-digging', 'Pendente': 'fa-solid fa-clock', 'Finalizado': 'fa-solid fa-circle-check', 'Resolvido': 'fa-solid fa-circle-check', 'Concluído': 'fa-solid fa-circle-check' };
+        return icones[status] || 'fa-solid fa-question-circle';
+    }
+
+    // --- LÓGICA DO RELÓGIO ---
+    function iniciarRelogios() {
+        if (clockInterval) clearInterval(clockInterval);
+        clockInterval = setInterval(() => {
+            document.querySelectorAll('.relogio-chamado').forEach(relogio => {
+                const criadoEm = relogio.dataset.criadoEm;
+                if (criadoEm) {
+                    relogio.textContent = formatarDuracao(new Date().getTime() - new Date(criadoEm).getTime());
+                }
+            });
+        }, 1000);
+    }
+    function formatarDuracao(ms) {
+        if (ms < 0) ms = 0;
+        const s = Math.floor((ms / 1000) % 60).toString().padStart(2, '0');
+        const m = Math.floor((ms / (1000 * 60)) % 60).toString().padStart(2, '0');
+        const h = Math.floor(ms / (1000 * 60 * 60)).toString().padStart(2, '0');
+        return `${h}:${m}:${s}`;
+    }
+    function formatarDuracaoTotal(inicioStr, fimStr) {
+        return formatarDuracao(new Date(fimStr).getTime() - new Date(inicioStr).getTime());
+    }
+
+    // --- TODAS AS OUTRAS FUNÇÕES COMPLETAS ---
     function desbloquearAudioComInteracao() {
         const desbloquear = () => {
             if (!audioDesbloqueado) {
-                // Tenta dar um "play" silencioso para o navegador liberar a permissão
                 notificationSound.muted = true;
                 notificationSound.play().then(() => {
                     notificationSound.pause();
                     notificationSound.currentTime = 0;
                     notificationSound.muted = false;
                     audioDesbloqueado = true;
-                    console.log("🔊 Áudio desbloqueado pela interação do usuário.");
-                    // Remove o "escutador" para não rodar de novo
+                    console.log("🔊 Áudio desbloqueado.");
                     document.body.removeEventListener('click', desbloquear);
-                    document.body.removeEventListener('keydown', desbloquear);
-                }).catch(e => {}); // Ignora erros se o play falhar antes da interação
+                }).catch(e => {});
             }
         };
-        // O áudio é desbloqueado com um clique OU ao pressionar uma tecla
-        document.body.addEventListener('click', desbloquear);
-        document.body.addEventListener('keydown', desbloquear);
-    }
-
-    // --- SOCKET.IO (COMUNICAÇÃO EM TEMPO REAL) ---
-    const socket = io();
-    socket.on('connect', () => console.log('✅ Conectado ao servidor real-time!'));
-
-    socket.on('novo_chamado', (novoChamado) => {
-        console.log('EVENTO: Novo chamado recebido', novoChamado);
-        todosChamados.unshift(novoChamado);
-        atualizarDashboardCompleto();
-        // Toca o som (funcionará após o desbloqueio)
-        notificationSound.play().catch(e => console.warn("Áudio bloqueado. Interaja com a página para habilitar."));
-    });
-
-    socket.on('chamado_atualizado', (chamadoAtualizado) => {
-        console.log('EVENTO: Chamado atualizado', chamadoAtualizado);
-        const index = todosChamados.findIndex(c => c.id === chamadoAtualizado.id);
-        if (index !== -1) {
-            const statusAnterior = todosChamados[index].status;
-            // ✅ CORREÇÃO: Toca o som se o status mudou para uma etapa importante.
-            if (statusAnterior !== chamadoAtualizado.status) {
-                notificationSound.play().catch(e => console.warn("Áudio bloqueado. Interaja com a página para habilitar."));
-            }
-            todosChamados[index] = chamadoAtualizado;
-        }
-        atualizarDashboardCompleto();
-    });
-
-    socket.on('chamado_excluido', (data) => {
-        console.log('EVENTO: Chamado excluído', data);
-        todosChamados = todosChamados.filter(c => c.id !== data.id);
-        atualizarDashboardCompleto();
-    });
-
-    // --- O RESTANTE DO SEU CÓDIGO JAVASCRIPT (SEM ALTERAÇÕES) ---
-    // (As funções como carregarDadosIniciais, renderizarTabela, etc. permanecem aqui)
-    function formatarData(dataString) {
-        if (!dataString) return 'N/A';
-        return new Date(dataString).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        document.body.addEventListener('click', desbloquear, { once: true });
     }
 
     function inicializarGraficos() {
         const ctxStatus = document.getElementById('grafico-status').getContext('2d');
-        graficoStatus = new Chart(ctxStatus, { type: 'doughnut', data: { labels: [], datasets: [{ data: [], borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false } });
+        graficoStatus = new Chart(ctxStatus, { type: 'bar', data: { labels: [], datasets: [{ data: [], borderWidth: 1 }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
         const ctxSetor = document.getElementById('grafico-setor').getContext('2d');
-        graficoSetor = new Chart(ctxSetor, { type: 'bar', data: { labels: [], datasets: [{ label: 'Nº de Chamados', data: [], borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y' } });
+        graficoSetor = new Chart(ctxSetor, { type: 'bar', data: { labels: [], datasets: [{ label: 'Nº de Chamados', data: [], borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false } });
     }
 
     async function carregarDadosIniciais() {
@@ -228,60 +408,12 @@
         });
     }
 
-    function adicionarListenerDeModal() {
-        const modalEl = document.getElementById('modalChamado');
-        modalEl.addEventListener('hidden.bs.modal', () => {
-            if (ultimoBotaoFocado) ultimoBotaoFocado.focus();
-        });
-    }
-
-    function atualizarDashboardCompleto() {
-        renderizarTabela(todosChamados);
-        atualizarKPIs(todosChamados);
-        atualizarGraficos(todosChamados);
-        atualizarFiltros(todosChamados);
-    }
-
-    function renderizarTabela(chamados) {
-        const corpoTabela = document.getElementById("corpo-tabela-chamados");
-        const filtroSetor = document.getElementById("filtro-setor").value;
-        const filtroStatus = document.getElementById("filtro-status").value;
-        const filtroBusca = document.getElementById("filtro-busca").value.toLowerCase();
-        document.getElementById("titulo-tabela").innerHTML = `<i class="fa-solid fa-table-list me-2"></i>Tabela de Chamados ${filtroStatus ? `(${filtroStatus})` : ''}`;
-        const chamadosFiltrados = chamados.filter(c =>
-            (!filtroSetor || c.setor === filtroSetor) &&
-            (!filtroStatus || c.status === filtroStatus) &&
-            (!filtroBusca || (c.nome || '').toLowerCase().includes(filtroBusca) || (c.descricao || '').toLowerCase().includes(filtroBusca) || (c.setor || '').toLowerCase().includes(filtroBusca))
-        );
-        corpoTabela.innerHTML = '';
-        if (chamadosFiltrados.length === 0) {
-            corpoTabela.innerHTML = `<tr><td colspan="7" class="text-center">Nenhum chamado encontrado com os filtros aplicados.</td></tr>`;
-            return;
-        }
-        chamadosFiltrados.forEach(c => {
-            const dataStr = formatarData(c.criado_em);
-            const statusIcon = obterIconeStatus(c.status);
-            const statusColor = obterCorStatus(c.status);
-            const textColor = ['Em andamento'].includes(c.status) ? '#000' : '#fff';
-            const statusBadge = `<span class="badge" style="background-color: ${statusColor}; color: ${textColor}; font-size: 0.9em;"><i class="${statusIcon} me-2"></i>${c.status}</span>`;
-            corpoTabela.innerHTML += `
-              <tr id="chamado-row-${c.id}">
-                <td>${c.id}</td> <td>${dataStr}</td> <td>${c.nome}</td>
-                <td>${c.setor}</td> <td title="${c.descricao || ''}">${(c.descricao || '').substring(0, 30)}...</td>
-                <td>${statusBadge}</td>
-                <td><button class="btn btn-sm btn-primary" onclick="abrirDetalhes(${c.id})"><i class="fa-solid fa-pen-to-square"></i> Gerenciar</button></td>
-              </tr>`;
-        });
-    }
-
     function atualizarKPIs(chamados) {
         document.getElementById('kpi-abertos').textContent = chamados.filter(c => c.status === 'Aberto').length;
         document.getElementById('kpi-andamento').textContent = chamados.filter(c => c.status === 'Em andamento').length;
         document.getElementById('kpi-pendentes').textContent = chamados.filter(c => c.status === 'Pendente').length;
         const hoje = new Date().toISOString().slice(0, 10);
-        document.getElementById('kpi-finalizados-hoje').textContent = chamados.filter(c =>
-            ['Finalizado', 'Resolvido', 'Concluído'].includes(c.status) && c.concluido_em?.startsWith(hoje)
-        ).length;
+        document.getElementById('kpi-finalizados-hoje').textContent = chamados.filter(c => ['Finalizado', 'Resolvido', 'Concluído'].includes(c.status) && c.concluido_em?.startsWith(hoje)).length;
     }
 
     function atualizarGraficos(chamados) {
@@ -290,6 +422,7 @@
         graficoStatus.data.datasets[0].data = Object.values(contagemStatus);
         graficoStatus.data.datasets[0].backgroundColor = Object.keys(contagemStatus).map(status => obterCorStatus(status));
         graficoStatus.update();
+
         const contagemSetor = chamados.reduce((acc, c) => ({ ...acc, [c.setor]: (acc[c.setor] || 0) + 1 }), {});
         graficoSetor.data.labels = Object.keys(contagemSetor);
         graficoSetor.data.datasets[0].data = Object.values(contagemSetor);
@@ -303,34 +436,45 @@
         document.getElementById('filtro-status').innerHTML = '<option value="">Todos os Status</option>' + statuses.map(s => `<option value="${s}">${s}</option>`).join('');
     }
 
-    function obterCorStatus(status) {
-        const cores = { 'Aberto': '#dc3545', 'Em andamento': '#ffc107', 'Pendente': '#6c757d', 'Finalizado': '#198754', 'Resolvido': '#198754', 'Concluído': '#198754' };
-        return cores[status] || '#0d6efd';
-    }
-
-    function obterIconeStatus(status) {
-        const icones = { 'Aberto': 'fa-solid fa-fire', 'Em andamento': 'fa-solid fa-person-digging', 'Pendente': 'fa-solid fa-clock', 'Finalizado': 'fa-solid fa-circle-check', 'Resolvido': 'fa-solid fa-circle-check', 'Concluído': 'fa-solid fa-circle-check' };
-        return icones[status] || 'fa-solid fa-question-circle';
-    }
-
-    async function abrirDetalhes(chamadoId) {
-        ultimoBotaoFocado = document.activeElement;
+async function abrirDetalhesModal(chamadoId) {
         const corpoModal = document.getElementById('modal-corpo');
         document.getElementById('modal-titulo').textContent = `Gerenciar Chamado #${chamadoId}`;
-        corpoModal.innerHTML = '<div class="text-center p-4"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
-        const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalChamado'));
+        corpoModal.innerHTML = '<div class="text-center p-4"><div class="spinner-border" role="status"></div></div>';
+        
+        const modalEl = document.getElementById('modalChamado');
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
         modal.show();
+
+        // Elementos dos botões do footer
+        const btnSalvar = document.getElementById('btn-salvar-modal');
+        const modalFooter = document.querySelector('#modalChamado .modal-footer');
+
+        // Limpa eventos antigos para evitar múltiplos cliques
+        let novoBtnSalvar = btnSalvar.cloneNode(true);
+        btnSalvar.parentNode.replaceChild(novoBtnSalvar, btnSalvar);
+        
+        let btnExcluir = document.getElementById('btn-excluir-chamado');
+        if (btnExcluir) btnExcluir.remove();
+
         try {
+            const chamado = todosChamados.find(c => c.id === chamadoId);
+            if (!chamado) throw new Error("Chamado não encontrado na lista local.");
+
             const [respMetricas, respHist] = await Promise.all([
                 fetch(`/api/chamados/${chamadoId}/metricas`),
                 fetch(`/api/chamados/${chamadoId}/historico`)
             ]);
-            if (!respMetricas.ok || !respHist.ok) throw new Error("Falha ao carregar dados do chamado.");
+
+            if (!respMetricas.ok || !respHist.ok) throw new Error("Falha ao carregar dados detalhados.");
+
             const metricas = await respMetricas.json();
             const historico = await respHist.json();
-            const metricasHtml = `<div class="row text-center mb-3"><div class="col"><div class="card p-2"><h6 class="card-title mb-1">Tempo de Resolução</h6><p class="card-text fs-4 fw-bold mb-0">${metricas.tempo_total_resolucao_minutos} min</p></div></div><div class="col"><div class="card p-2"><h6 class="card-title mb-1">Tempo Parado</h6><p class="card-text fs-4 fw-bold mb-0">${metricas.tempo_total_pendente_minutos} min</p></div></div></div>`;
-            const formHtml = `<div class="p-2 border rounded"><h5><i class="fa-solid fa-shuffle me-2"></i>Alterar Status</h5><div class="mb-3"><label for="novo-status" class="form-label">Novo Status</label><select id="novo-status" class="form-select"><option value="Em andamento">Em andamento</option><option value="Pendente">Pendente</option><option value="Finalizado">Finalizado</option></select></div><div class="mb-3"><label for="nova-observacao" class="form-label">Adicionar Observação</label><textarea id="nova-observacao" class="form-control" rows="3"></textarea></div></div>`;
-            let timelineHtml = `<ul class="list-group list-group-flush mt-2">`;
+
+            // --- Construção do HTML do Modal ---
+            const metricasHtml = `<div class="row text-center mb-4"><div class="col"><div class="card p-2"><h6 class="card-title mb-1 small text-muted">Tempo de Resolução</h6><p class="card-text fs-4 fw-bold mb-0">${metricas.tempo_total_resolucao_minutos} min</p></div></div><div class="col"><div class="card p-2"><h6 class="card-title mb-1 small text-muted">Tempo Parado</h6><p class="card-text fs-4 fw-bold mb-0">${metricas.tempo_total_pendente_minutos} min</p></div></div></div>`;
+            const descricaoHtml = `<div class="mb-4"><h5><i class="fa-solid fa-file-alt me-2"></i>Descrição do Problema</h5><p class="p-3 bg-light rounded text-dark small">${chamado.descricao || 'N/A'}</p></div>`;
+            const formHtml = `<div class="p-3 border rounded"><h5><i class="fa-solid fa-shuffle me-2"></i>Alterar Status</h5><div class="mb-3"><label for="novo-status" class="form-label">Novo Status</label><select id="novo-status" class="form-select"><option value="Em andamento">Em andamento</option><option value="Pendente">Pendente</option><option value="Finalizado">Finalizado</option></select></div><div><label for="nova-observacao" class="form-label">Adicionar Observação/Resolução</label><textarea id="nova-observacao" class="form-control" rows="3"></textarea></div></div>`;
+            let timelineHtml = '<h5 class="mt-4"><i class="fa-solid fa-timeline me-2"></i>Linha do Tempo</h5><ul class="list-group list-group-flush mt-2">';
             if (historico.length > 0) {
                 historico.forEach(item => {
                     timelineHtml += `<li class="list-group-item"><p class="mb-1">Status: <strong>${item.de || 'Criação'}</strong> <i class="fa-solid fa-arrow-right-long mx-2"></i> <strong>${item.para}</strong></p><small class="text-muted">${formatarData(item.timestamp)}</small></li>`;
@@ -339,36 +483,48 @@
                 timelineHtml += `<li class="list-group-item text-center text-muted">Nenhum histórico de mudança de status.</li>`;
             }
             timelineHtml += '</ul>';
-            corpoModal.innerHTML = `${metricasHtml}${formHtml}<h5 class="mt-4"><i class="fa-solid fa-timeline me-2"></i>Linha do Tempo</h5>${timelineHtml}`;
-            const btnSalvar = document.getElementById('btn-salvar-modal');
-            const novoBtnSalvar = btnSalvar.cloneNode(true);
-            btnSalvar.parentNode.replaceChild(novoBtnSalvar, btnSalvar);
-            novoBtnSalvar.addEventListener('click', async () => {
+
+            corpoModal.innerHTML = `${metricasHtml}${descricaoHtml}${formHtml}${timelineHtml}`;
+
+            // --- Funções de Ação ---
+            const handleSave = async () => {
+                const novoStatus = document.getElementById('novo-status').value;
+                const novaObservacao = document.getElementById('nova-observacao').value;
                 const resp = await fetch(`/api/chamados/${chamadoId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: document.getElementById('novo-status').value, observacao: document.getElementById('nova-observacao').value })
+                    body: JSON.stringify({ status: novoStatus, observacao: novaObservacao })
                 });
-                if (resp.ok) modal.hide();
-                else alert('Falha ao atualizar o chamado.');
-            });
-            const modalFooter = document.querySelector('#modalChamado .modal-footer');
-            const btnExcluirAntigo = document.getElementById('btn-excluir-chamado');
-            if (btnExcluirAntigo) btnExcluirAntigo.remove();
-            const btnExcluir = document.createElement('button');
+                if (resp.ok) {
+                    modal.hide();
+                } else {
+                    alert('Falha ao atualizar o chamado.');
+                }
+            };
+
+            const handleDelete = async () => {
+                if (confirm(`Tem certeza que deseja excluir permanentemente o Chamado #${chamadoId}?`)) {
+                    const resp = await fetch(`/api/chamados/${chamadoId}`, { method: 'DELETE' });
+                    if (resp.ok) {
+                        modal.hide();
+                    } else {
+                        alert('Falha ao excluir o chamado.');
+                    }
+                }
+            };
+
+            // --- Anexa os eventos aos botões ---
+            novoBtnSalvar.addEventListener('click', handleSave);
+            
+            btnExcluir = document.createElement('button');
             btnExcluir.id = 'btn-excluir-chamado';
             btnExcluir.className = 'btn btn-danger me-auto';
             btnExcluir.innerHTML = '<i class="fa-solid fa-trash me-2"></i>Excluir Chamado';
             modalFooter.prepend(btnExcluir);
-            btnExcluir.addEventListener('click', async () => {
-                if (confirm(`Tem certeza que deseja excluir permanentemente o Chamado #${chamadoId}?`)) {
-                    const resp = await fetch(`/api/chamados/${chamadoId}`, { method: 'DELETE' });
-                    if (resp.ok) modal.hide();
-                    else alert('Falha ao excluir o chamado.');
-                }
-            });
+            btnExcluir.addEventListener('click', handleDelete);
+
         } catch (error) {
-            corpoModal.innerHTML = `<div class="alert alert-danger">Erro ao carregar os detalhes: ${error.message}</div>`;
+            corpoModal.innerHTML = `<div class="alert alert-danger"><b>Erro:</b> ${error.message}</div>`;
         }
     }
 </script>

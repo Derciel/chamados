@@ -19,6 +19,7 @@ class Chamado(db.Model):
     setor = db.Column(db.String(50), nullable=False)
     descricao = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(20), default='Aberto')
+    sistema_origem = db.Column(db.String(20), default='novo', nullable=False)
     imagem_url = db.Column(db.String(200))
     observacao = db.Column(db.Text) # nullable=True o torna opcional
     user_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)

@@ -3,7 +3,7 @@ services:
   - type: web
     name: sistema-chamados-nicopel
     env: python
-    plan: starter # Recomendo o plano 'starter' para evitar que o serviço durma
+    plan: free # Recomendo o plano 'starter' para evitar que o serviço durma
     region: oregon
     buildCommand: "pip install -r requirements.txt"
     # ✅ CORREÇÃO: O comando agora executa nosso script 'run.py'

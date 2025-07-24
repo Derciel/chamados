@@ -14,3 +14,5 @@ Flask-Migrate
 Flask-Cors
 requests
 python-dotenv
+google-generativeai
+python-dotenv

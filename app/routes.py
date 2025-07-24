@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for, flash, jsonify
+import google.generativeai as genai
 from datetime import datetime
 import os, logging
 from sqlalchemy import func, case
@@ -11,6 +12,8 @@ from sqlalchemy import text
 
 bp = Blueprint('routes_bp', __name__)
 api_bp = Blueprint('api_bp', __name__)
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel("gemini-pro")
 
 
 @bp.route('/')
@@ -51,7 +54,6 @@ def novo_chamado():
                 nome=request.form.get('nome'),
                 setor=request.form.get('setor'),
                 descricao=request.form.get('descricao'),
-                anydesk=request.form.get('anydesk'),
                 status='Aberto',
                 user_id=session['usuario_id'],
                 funcionario_id=session.get('funcionario_id'),
@@ -396,25 +398,13 @@ def metricas_chamado(id):
         'tempo_total_resolucao_minutos': tempo_resolucao_minutos,
         'tempo_total_pendente_minutos': tempo_pendente_minutos
     })
-    
-@api_bp.route('/api/chatbot', methods=['POST'])
+  
+@api_bp.route('/chatbot', methods=['POST'])
 def chatbot():
-    data = request.get_json()
-
+    # TODO: Certifique-se de que a lógica do chatbot aqui está alinhada
+    # As linhas abaixo (corpo da função) devem ter o MESMO nível de indentação
+    data = request.json
     if not data or 'message' not in data:
-        return jsonify({'reply': 'Mensagem inválida.'}), 400
-
-    user_message = data['message'].strip().lower()
-
-    # Respostas básicas — lógica local (mock)
-    respostas = {
-        'oi': 'Olá! Como posso te ajudar?',
-        'olá': 'Oi! Tudo bem? Precisa de ajuda com algum chamado?',
-        'chamado': 'Você pode abrir um novo chamado clicando em "Abrir Chamado" no menu.',
-        'suporte': 'Nosso suporte funciona de segunda a sexta, das 8h às 18h.'
-    }
-
-    # Resposta padrão se não encontrar correspondência
-    resposta = respostas.get(user_message, "Desculpe, não entendi. Pode reformular sua pergunta?")
-
-    return jsonify({'reply': resposta})
+        return jsonify({"error": "Mensagem não fornecida na requisição."}), 400
+    # ... e assim por diante
+    return jsonify({"response": "resposta de teste"})

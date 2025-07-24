@@ -1,15 +1,15 @@
-# run.py
+# run.py (Corrected for dotenv)
 
-import eventlet
-import eventlet.wsgi
-import socket
 import os
+import socket
+from dotenv import load_dotenv # Add this import!
 
-eventlet.monkey_patch()
+# --- Load environment variables from .env file FIRST ---
+load_dotenv() # This line must come before anything that tries to read os.getenv/os.environ
+# --- End .env loading ---
 
 from app import create_app, socketio
-from app import events
-from socketio import WSGIApp# Garante que os eventos sejam registrados
+# from app import events  # Ensure events are imported/registered as needed
 
 app = create_app()
 
@@ -23,18 +23,17 @@ def porta_disponivel(porta):
             return False
 
 if __name__ == '__main__':
-    porta_inicial = int(os.environ.get('PORT', 9090))
+    porta_inicial = int(os.environ.get('PORT', 5000))
     porta = porta_inicial
 
-    # Tenta encontrar uma porta livre entre 9090 e 9100
-    while not porta_disponivel(porta) and porta < 9100:
+    while not porta_disponivel(porta) and porta < 5010: # Adjust upper limit if needed
         porta += 1
 
-    if porta > 9099:
-        print("❌ Nenhuma porta disponível entre 9090 e 9100.")
+    if not porta_disponivel(porta):
+        print(f"❌ Nenhuma porta disponível entre {porta_inicial} e {porta-1}.")
         exit(1)
 
-    print(f"🚀 Iniciando servidor Eventlet na porta {porta}...")
+    print(f"🚀 Iniciando servidor Flask-SocketIO na porta {porta}...")
     print(f"🌐 Acesse: http://localhost:{porta}")
 
-    eventlet.wsgi.server(eventlet.listen(('', porta)), WSGIApp(socketio, app))
+    socketio.run(app, host='0.0.0.0', port=porta, debug=True)
