@@ -19,7 +19,7 @@ services:
         generateValue: true
       - key: DATABASE_URL
         fromDatabase:
-          name: seu-banco-de-dados # SUBSTITUA pelo nome do seu DB na Render
+          name: meubancochamados # SUBSTITUA pelo nome do seu DB na Render
           property: connectionString
 
     buildCommand: "pip install -r requirements.txt"
