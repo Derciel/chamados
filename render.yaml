@@ -1,20 +1,51 @@
-# render.yaml (para o serviço de IA)
+# render.yaml
+
 services:
+  # --- SERVIÇO 1: O SISTEMA DE CHAMADOS PRINCIPAL ---
   - type: web
-    name: ia-chatbot-nicopel
+    name: sistema-chamados
     env: python
-    # O plano gratuito pode não ter RAM suficiente.
-    # Considere o plano "Starter" ou superior para rodar o modelo.
-    plan: free
+    # O plano 'Starter' é recomendado para evitar que o serviço durma e tenha mais RAM
+    plan: starter 
     region: oregon
-    buildCommand: "pip install -r requirements.txt"
-  
-    # ✅ CORREÇÃO: Comando ajustado para o novo nome do arquivo.
-    startCommand: "gunicorn run:app --timeout 120"
-    startCommand: "flask db upgrade && python run.py"
+    
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      # Adicione sua chave Gemini aqui no painel da Render
+      - key: FLASK_APP
+        value: run:app 
+      # Adicione suas chaves aqui no painel da Render
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: seu-banco-de-dados # SUBSTITUA pelo nome do seu DB na Render
+          property: connectionString
+
+    buildCommand: "pip install -r requirements.txt"
+    
+    # Executa a migração do banco de dados antes de iniciar o servidor
+    preDeployCommand: "flask db upgrade"
+
+    # Inicia o servidor do sistema de chamados
+    startCommand: "python run.py"
+
+  # --- SERVIÇO 2: A IA DO CHATBOT ---
+  - type: web
+    name: ia-chatbot
+    env: python
+    # IMPORTANTE: A IA precisa de mais memória. O plano 'Starter Plus' ou 'Standard' é recomendado.
+    plan: free
+    region: oregon
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      # ✅ Adicione sua chave Gemini aqui no painel da Render
       - key: key
         sync: false
+
+    buildCommand: "pip install -r requirements.txt"
+    
+    # Inicia o servidor da IA usando Gunicorn para melhor performance
+    startCommand: "gunicorn ia_server:app --timeout 120"

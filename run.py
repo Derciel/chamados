@@ -4,22 +4,19 @@ import eventlet
 import os
 import logging
 
-# ESSENCIAL: Modifica as bibliotecas para serem assíncronas.
-# Deve ser a primeira coisa a ser executada.
+# Essencial para o SocketIO
 eventlet.monkey_patch()
 
-# AGORA, importe a factory e o objeto socketio do seu pacote 'app'.
 from app import create_app, socketio
 
-# Cria a instância completa da aplicação (que já inclui o sistema E a IA).
+# Cria a instância do sistema de chamados
 app = create_app()
 
-# Importa os eventos do SocketIO para que sejam registrados.
+# Importa os eventos do SocketIO
 from app import events
 
 if __name__ == '__main__':
+    # Este servidor rodará em uma porta diferente, como a 8080
     port = int(os.environ.get('PORT', 8080))
-    logging.info(f"🚀 Iniciando servidor completo (Sistema + IA) na porta {port}...")
-    
-    # Inicia o servidor com SocketIO, que gerencia o Flask internamente.
+    logging.info(f"🚀 Iniciando servidor do Sistema de Chamados na porta {port}...")
     socketio.run(app, host='0.0.0.0', port=port, debug=True)
