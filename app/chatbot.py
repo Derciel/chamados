@@ -1,10 +1,9 @@
+# app/chatbot.py
 import os
-from flask import request, jsonify, current_app, session, Response
+from flask import request, jsonify, current_app, session
 import google.generativeai as genai
 import logging
-import json
 
-# --- Configuração da API Gemini ---
 GEMINI_API_KEY = os.getenv("key") 
 gemini_model = None
 SYSTEM_INSTRUCTION = """
@@ -26,17 +25,13 @@ else:
     except Exception as e:
         logging.error(f"❌ Erro ao configurar Gemini API: {e}")
 
-# O histórico em memória é perdido a cada reinicialização.
 histories = {}
-MAX_HISTORY_TURNS = 5 
+MAX_HISTORY_TURNS = 5
 
-# --- Lógica do Chatbot com Streaming ---
-
-# ✅ CORREÇÃO: A função agora aceita 'logger' como argumento.
-def generate_with_gemini_stream(user_id, message, logger):
+def generate_with_gemini(user_id, message):
     if not gemini_model:
-        yield f"data: {json.dumps({'error': 'Serviço de chatbot indisponível.'})}\n\n"
-        return
+        current_app.logger.error(f"[{user_id}] Chatbot chamado, mas modelo não inicializado.")
+        return "Desculpe, o serviço de chatbot está temporariamente indisponível."
 
     chat_session = histories.setdefault(user_id, gemini_model.start_chat(history=[]))
     
@@ -44,23 +39,14 @@ def generate_with_gemini_stream(user_id, message, logger):
         chat_session.history = chat_session.history[-(MAX_HISTORY_TURNS * 2):]
 
     try:
-        # ✅ CORREÇÃO: Usa o 'logger' passado como argumento.
-        logger.info(f"[{user_id}] Enviando para Gemini (stream): '{message}'")
-        response_stream = chat_session.send_message(message, stream=True)
-        
-        for chunk in response_stream:
-            yield f"data: {json.dumps({'reply_chunk': chunk.text})}\n\n"
-
+        response = chat_session.send_message(message)
+        return response.text
     except Exception as e:
-        # ✅ CORREÇÃO: Usa o 'logger' passado como argumento.
-        logger.exception(f"[{user_id}] ❌ Erro na API Gemini: {e}")
-        yield f"data: {json.dumps({'error': 'Desculpe, tive um problema técnico.'})}\n\n"
+        current_app.logger.exception(f"[{user_id}] ❌ Erro na API Gemini: {e}")
         histories.pop(user_id, None)
+        return "Desculpe, tive um problema técnico. Tente novamente."
 
-# --- Função de Inicialização das Rotas ---
 def init_chatbot_routes(app):
-    """Anexa as rotas do chatbot à aplicação Flask principal."""
-    
     @app.route('/api/chatbot', methods=['POST'])
     def chatbot():
         data = request.json
@@ -69,7 +55,5 @@ def init_chatbot_routes(app):
 
         user_message = data.get('message')
         user_id = session.get('usuario_id', request.remote_addr) 
-
-        # ✅ CORREÇÃO: Obtém o logger aqui (onde o contexto é seguro) e o passa para a função.
-        logger = current_app.logger
-        return Response(generate_with_gemini_stream(user_id, user_message, logger), mimetype='text/event-stream')
+        ai_response = generate_with_gemini(user_id, user_message)
+        return jsonify({"reply": ai_response})

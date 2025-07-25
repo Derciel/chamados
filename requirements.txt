@@ -1,18 +1,17 @@
+alembic
+bcrypt
+click
 Flask
+Flask-Bcrypt
+Flask-Cors
+Flask-Migrate
+Flask-SocketIO
+Flask-SQLAlchemy
+greenlet
 gunicorn
 eventlet
-Flask-SocketIO
-
-# Banco de Dados
-Flask-SQLAlchemy
-Flask-Bcrypt
-psycopg2-binary  # Para PostgreSQL em produção
-alembic
-Flask-Migrate
-
-# API e Utilitários
-Flask-Cors
-requests
+psycopg2-binary
 python-dotenv
 google-generativeai
-python-dotenv
+SQLAlchemy
+Werkzeug
