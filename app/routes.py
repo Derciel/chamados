@@ -129,30 +129,22 @@ def logout():
 # --- ROTAS DA API (Para o nosso frontend JavaScript) ---
 
 @bp.route('/api/chamados', methods=['GET'])
-def listar_chamados():
-    """
-    API que retorna a lista completa de chamados para a carga inicial do dashboard.
-    """
-    if 'email' not in session or session.get('email') != 'adm@adm':
-        return jsonify({'erro': 'Acesso não autorizado'}), 403
+def api_listar_chamados():
+    if not is_admin():
+        return jsonify({'error': 'Acesso não autorizado'}), 403
 
-    chamados = Chamado.query.order_by(Chamado.criado_em.desc()).all()
+    chamados = Chamado.query.filter_by(sistema_origem='novo').order_by(Chamado.criado_em.desc()).all()
     
-    return jsonify([
-        {
-            'id': c.id,
-            'nome': c.nome,
-            'setor': c.setor,
-            'descricao': c.descricao,
-            'status': c.status,
-            'observacao': c.observacao,
-            'imagem_url': c.imagem_url,
-            'criado_em': c.criado_em.isoformat() + 'Z' if c.criado_em else None,
-            'iniciado_em': c.iniciado_em.isoformat() + 'Z' if c.iniciado_em else None,
-            'andamento_em': c.andamento_em.isoformat() + 'Z' if c.andamento_em else None,
-            'concluido_em': c.concluido_em.isoformat() + 'Z' if c.concluido_em else None
-        } for c in chamados
-    ])
+    # ✅ CORREÇÃO: Garante que a data seja enviada no formato ISO 8601 completo
+    return jsonify([{
+        'id': c.id, 
+        'nome': c.nome, 
+        'setor': c.setor, 
+        'descricao': c.descricao,
+        'status': c.status,
+        'criado_em': c.criado_em.isoformat() if c.criado_em else None,
+        'concluido_em': c.concluido_em.isoformat() if c.concluido_em else None
+    } for c in chamados])
 
 @bp.route('/api/chamados/<int:id>', methods=['GET', 'PUT', 'DELETE'])
 def chamado_detalhe(id):

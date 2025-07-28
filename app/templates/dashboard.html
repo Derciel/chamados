@@ -315,7 +315,12 @@
     // --- FUNÇÕES AUXILIARES ---
     function formatarData(dataString) {
         if (!dataString) return 'N/A';
-        return new Date(dataString).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+        const data = new Date(dataString);
+        // Verifica se a data é válida antes de formatar
+        if (isNaN(data.getTime())) {
+            return 'Data Inválida';
+        }
+        return data.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
     }
     function criarAvatar(nome) {
         const iniciais = (nome || '??').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
