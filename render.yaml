@@ -1,26 +1,42 @@
+# render.yaml - Blueprint para se conectar a um banco de dados externo (Neon.tech)
+
 services:
+  # --- SERVIÇO 1: O SISTEMA DE CHAMADOS PRINCIPAL ---
   - type: web
-    name: nicopel-chatbot
+    name: sistema-chamados
     env: python
-    # ✅ MELHORIA: O plano 'Starter' é o mínimo recomendado para um serviço de IA.
-    # Ele não "dorme" e tem mais memória, garantindo que sua IA responda rapidamente.
+    plan: free 
+    region: oregon
+    
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: FLASK_APP
+        value: run:app 
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      # ✅ CORREÇÃO: A URL do banco agora é uma variável secreta.
+      # Você irá colar a string de conexão do Neon diretamente no painel da Render.
+      - key: DATABASE_URL
+        sync: false
+      # Adicione suas outras chaves (SECRET_KEY, GEMINI_API_KEY) no painel da Render.
+
+    buildCommand: "pip install -r requirements.txt"
+    preDeployCommand: "flask db upgrade"
+    startCommand: "python run.py"
+
+  # --- SERVIÇO 2: A IA DO CHATBOT ---
+  - type: web
+    name: ia-chatbot
+    env: python
     plan: free
     region: oregon
 
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      # ✅ CORREÇÃO: Nome da variável corrigido para corresponder ao código.
-      # O valor deve ser colado no painel da Render, não aqui.
       - key: key
         sync: false
-      # ✅ MELHORIA: A variável PORT é injetada automaticamente pela Render.
-      # Não é necessário defini-la aqui.
-      - key: PYTHONUNBUFFERED
-        value: "1"
 
-    # Comando para instalar as dependências
     buildCommand: "pip install -r requirements.txt"
-    
-    # Comando para iniciar o servidor Gunicorn de forma robusta
-    startCommand: "gunicorn --workers 1 --threads 4 --timeout 120 ia_server:app"
+    startCommand: "gunicorn ia_server:app --timeout 120"
