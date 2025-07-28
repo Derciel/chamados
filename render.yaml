@@ -25,8 +25,7 @@ services:
     buildCommand: "pip install -r requirements.txt"
     preDeployCommand: "flask db upgrade"
     startCommand: "python run.py"
-    healthCheck:
-      path: / # Verifica se o sistema principal está online
+ 
 
   # --- SERVIÇO 2: A IA DO CHATBOT (Secundário) ---
   - type: web
@@ -49,5 +48,3 @@ services:
     
     # Inicia o servidor da IA usando Gunicorn para melhor performance.
     startCommand: "gunicorn ia_server:app --timeout 120"
-    healthCheck:
-      path: / # Verifica se o servidor da IA está online
