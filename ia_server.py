@@ -1,10 +1,13 @@
 # ia_server.py
-
 import os
 import logging
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Carrega variáveis de ambiente do arquivo .env (se existir)
+load_dotenv()
 
 # --- Configuração do Servidor e Logging ---
 app = Flask(__name__)
@@ -14,8 +17,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # --- Configuração da API Gemini ---
-# ✅ CORREÇÃO: Usa o nome de variável padrão e mais explícito.
+# Obtém a chave da API do ambiente
 GEMINI_API_KEY = os.getenv("key") 
+
 gemini_model = None
 SYSTEM_INSTRUCTION = """
 Você é um assistente virtual especializado em Tecnologia da Informação (TI) da empresa Nicopel Embalagens.
@@ -45,15 +49,14 @@ def generate_with_gemini(user_id, message):
     if not gemini_model:
         app.logger.error(f"[{user_id}] Tentativa de uso do chatbot com modelo não inicializado.")
         return "Desculpe, o serviço de chatbot está temporariamente indisponível."
-
+    
     chat_session = histories.setdefault(user_id, gemini_model.start_chat(history=[]))
     
     if len(chat_session.history) > MAX_HISTORY_TURNS * 2:
         chat_session.history = chat_session.history[-(MAX_HISTORY_TURNS * 2):]
-
+    
     try:
         app.logger.info(f"[{user_id}] Enviando para Gemini: '{message}'")
-        # ✅ MELHORIA: Removido o 'stream=True' para uma requisição mais simples e direta.
         response = chat_session.send_message(message)
         full_reply = response.text
         app.logger.info(f"[{user_id}] Resposta recebida: '{full_reply}'")
@@ -69,12 +72,18 @@ def chatbot():
     data = request.json
     if not data or 'message' not in data:
         return jsonify({"error": "Mensagem não fornecida."}), 400
-
+    
     user_message = data.get('message')
     user_id = request.remote_addr # Usa o IP como identificador
-
+    
     ai_response = generate_with_gemini(user_id, user_message)
+    
     return jsonify({"reply": ai_response})
+
+# --- Rota para servir o frontend ---
+@app.route('/')
+def index():
+    return app.send_static_file('chatbot.html')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
