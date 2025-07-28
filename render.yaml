@@ -6,9 +6,22 @@ services:
     startCommand: gunicorn --workers 1 --threads 2 --timeout 120 --bind 0.0.0.0:$PORT ia_server:app
     envVars:
       - key: key
-        sync: false
+        sync: false  # Não sincronizar com o repositório (segurança)
       - key: PORT
         value: 10000
+      - key: PYTHONUNBUFFERED
+        value: "1"  # Garante que os logs apareçam em tempo real
+      - key: GUNICORN_CMD_ARGS
+        value: "--access-logfile - --error-logfile -"  # Envia logs para stdout/stderr
     healthCheck:
       path: /health
+      interval: 30  # Verifica a cada 30 segundos
+      timeout: 10   # Timeout de 10 segundos para o health check
+      retries: 3    # Tenta 3 vezes antes de considerar falha
     plan: free
+    # Configurações para economizar recursos no plano gratuito
+    instanceType: free
+    region: oregon  # Escolha a região mais próxima de seus usuários
+    # Limites para evitar sobrecarga
+    maxConcurrentRequests: 10
+    queueDepth: 20
