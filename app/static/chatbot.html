@@ -53,6 +53,8 @@
     </form>
 </div>
 
+// ... (código CSS e HTML permanecem iguais)
+
 <script>
     document.addEventListener("DOMContentLoaded", () => {
         const fab = document.getElementById('chatbot-fab');
@@ -61,71 +63,63 @@
         const form = document.getElementById('chatbot-input-form');
         const input = document.getElementById('chatbot-input-text');
         const messagesContainer = document.getElementById('chatbot-messages');
-
+        
+        // Adiciona mensagem de carregamento inicial
+        const loadingMessage = document.createElement('div');
+        loadingMessage.className = 'chat-message bot';
+        loadingMessage.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> Iniciando assistente...';
+        messagesContainer.appendChild(loadingMessage);
+        
+        // Verifica se o backend está ativo
+        fetch('/health')
+            .then(response => {
+                if (response.ok) {
+                    loadingMessage.innerHTML = 'Olá! Eu sou a Assistente de IA da Nicopel Embalagens. Em que posso ajudar?';
+                } else {
+                    throw new Error('Serviço indisponível');
+                }
+            })
+            .catch(error => {
+                loadingMessage.textContent = 'Desculpe, estou com problemas para me conectar ao servidor. Tente novamente mais tarde.';
+                console.error('Erro de conexão:', error);
+            });
+        
         fab.addEventListener('click', () => {
             chatWindow.classList.toggle('visible');
             fab.classList.toggle('open');
             fabIcon.classList.toggle('fa-comment-dots');
             fabIcon.classList.toggle('fa-xmark');
         });
-
+        
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const userMessage = input.value.trim();
             if (userMessage === '') return;
-
+            
             addMessage(userMessage, 'user');
             input.value = '';
             
-            const botMessageDiv = addMessage('<div class="spinner-border spinner-border-sm" role="status"></div>', 'bot');
+            const botMessageDiv = addMessage('<div class="spinner-border spinner-border-sm" role="status"></div> Processando...', 'bot');
             
-            let fullReply = '';
-
             try {
-                // ✅ CORREÇÃO: A URL agora usa o IP da sua rede local.
-                // Lembre-se de verificar se este IP ainda é o correto.
-                const response = await fetch('http://10.1.1.85:5000/api/chatbot', {
+                const response = await fetch('/api/chatbot', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: userMessage })
                 });
-
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 
-                botMessageDiv.innerHTML = '';
-                
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n\n');
-
-                    for (const line of lines) {
-                        if (line.startsWith('data:')) {
-                            const data = JSON.parse(line.substring(5));
-                            if (data.reply_chunk) {
-                                fullReply += data.reply_chunk;
-                                const html = marked.parse(fullReply);
-                                botMessageDiv.innerHTML = DOMPurify.sanitize(html);
-                                messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                            }
-                            if (data.error) {
-                                botMessageDiv.textContent = data.error;
-                            }
-                        }
-                    }
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-
+                
+                const data = await response.json();
+                botMessageDiv.textContent = data.reply || 'Desculpe, não entendi sua mensagem.';
             } catch (error) {
                 console.error("Erro no chatbot:", error);
-                botMessageDiv.textContent = 'Desculpe, estou com problemas para me conectar à IA.';
+                botMessageDiv.textContent = 'Desculpe, estou com problemas para me conectar à IA. Tente novamente mais tarde.';
             }
         });
-
+        
         function addMessage(text, sender) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `chat-message ${sender}`;
