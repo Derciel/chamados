@@ -24,7 +24,3 @@ services:
     
     # Comando para iniciar o servidor Gunicorn de forma robusta
     startCommand: "gunicorn --workers 1 --threads 4 --timeout 120 ia_server:app"
-
-    # ✅ CORREÇÃO: Aponta para a rota raiz '/', que existe no seu código.
-    healthCheck:
-      path: /
