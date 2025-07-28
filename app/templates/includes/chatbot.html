@@ -62,9 +62,6 @@
         const input = document.getElementById('chatbot-input-text');
         const messagesContainer = document.getElementById('chatbot-messages');
 
-        /**
-         * ✅ CORREÇÃO: Lógica para abrir/fechar o chat e trocar o ícone.
-         */
         fab.addEventListener('click', () => {
             chatWindow.classList.toggle('visible');
             fab.classList.toggle('open');
@@ -85,6 +82,8 @@
             let fullReply = '';
 
             try {
+                // ✅ CORREÇÃO: A URL agora usa o IP da sua rede local.
+                // Lembre-se de verificar se este IP ainda é o correto.
                 const response = await fetch('http://10.1.1.85:5000/api/chatbot', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -131,11 +130,10 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = `chat-message ${sender}`;
             
-            // ✅ MELHORIA DE SEGURANÇA
             if (sender === 'user') {
-                messageDiv.textContent = text; // Usa textContent para mensagens do usuário (mais seguro)
+                messageDiv.textContent = text;
             } else {
-                messageDiv.innerHTML = text; // Usa innerHTML para a resposta do bot (que precisa renderizar HTML)
+                messageDiv.innerHTML = text;
             }
             
             messagesContainer.appendChild(messageDiv);
