@@ -1,48 +1,53 @@
-# render.yaml - Blueprint para se conectar a um banco de dados externo (Neon.tech)
+# render.yaml - Blueprint para implantar o Sistema de Chamados e a IA do Chatbot
 
 services:
-  # --- SERVIÇO 1: O SISTEMA DE CHAMADOS PRINCIPAL ---
+  # --- SERVIÇO 1: O SISTEMA DE CHAMADOS (Principal) ---
   - type: web
     name: sistema-chamados
     env: python
-    plan: free 
+    # O plano 'Starter' é recomendado para evitar que o serviço durma e tenha mais RAM.
+    plan: starter
     region: oregon
     
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
+      # Diz ao Flask onde encontrar sua aplicação para rodar comandos CLI
       - key: FLASK_APP
         value: run:app 
       - key: PYTHONUNBUFFERED
         value: "1"
+      # ✅ CORREÇÃO: A URL do banco de dados do Neon será configurada no painel da Render.
       - key: DATABASE_URL
         sync: false
-      - key: key
-        sync: false
+      # Adicione suas outras chaves (como SECRET_KEY) no painel da Render.
 
     buildCommand: "pip install -r requirements.txt"
     preDeployCommand: "flask db upgrade"
     startCommand: "python run.py"
+    healthCheck:
+      path: / # Verifica se o sistema principal está online
 
-  # --- SERVIÇO 2: A IA DO CHATBOT ---
- services:
+  # --- SERVIÇO 2: A IA DO CHATBOT (Secundário) ---
   - type: web
-    name: nicopel-chatbot-free
+    name: ia-chatbot
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --workers 1 --threads 2 --timeout 120 --bind 0.0.0.0:$PORT ia_server:app
+    # IMPORTANTE: A IA pode precisar de mais memória. O plano 'Starter Plus' é uma boa opção.
+    plan: free
+    region: oregon
+
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      # ✅ CORREÇÃO: Nome da variável de ambiente corrigido para corresponder ao código.
+      # O valor deve ser colado no painel da Render.
       - key: key
         sync: false
-      - key: PORT
-        value: 10000
-      - key: PYTHONUNBUFFERED
-        value: "1"
+
+    # Usa o mesmo comando de build do serviço principal.
+    buildCommand: "pip install -r requirements.txt"
+    
+    # Inicia o servidor da IA usando Gunicorn para melhor performance.
+    startCommand: "gunicorn ia_server:app --timeout 120"
     healthCheck:
-      path: /health
-      interval: 30
-      timeout: 10
-      retries: 3
-    plan: free
-    instanceType: free
-    region: oregon
+      path: / # Verifica se o servidor da IA está online
