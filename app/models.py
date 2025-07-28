@@ -1,3 +1,4 @@
+# models.py
 from . import db
 
 class Usuario(db.Model):
@@ -6,12 +7,9 @@ class Usuario(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     senha_hash = db.Column(db.String(128), nullable=False)
     funcionario_id = db.Column(db.Integer, unique=True)
-    # ✅ Coluna adicionada para controle de acesso (admin/user)
     role = db.Column(db.String(20), nullable=False, default='user') 
     security_question = db.Column(db.String(50))
     security_answer = db.Column(db.String(255))
-
-    # ✅ Relacionamento explícito para melhor performance e clareza
     chamados = db.relationship('Chamado', back_populates='autor', lazy='dynamic')
 
     def __repr__(self):
@@ -24,9 +22,7 @@ class Chamado(db.Model):
     setor = db.Column(db.String(50), nullable=False, index=True)
     descricao = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(20), default='Aberto', nullable=False, index=True)
-    # ✅ Coluna adicionada para o campo Anydesk
     anydesk = db.Column(db.String(50), nullable=True) 
-    # ✅ Coluna adicionada para separar chamados novos dos legados
     sistema_origem = db.Column(db.String(20), default='novo', nullable=False) 
     
     imagem_url = db.Column(db.String(200))
