@@ -15,28 +15,34 @@ services:
         value: run:app 
       - key: PYTHONUNBUFFERED
         value: "1"
-      # ✅ CORREÇÃO: A URL do banco agora é uma variável secreta.
-      # Você irá colar a string de conexão do Neon diretamente no painel da Render.
       - key: DATABASE_URL
         sync: false
-      # Adicione suas outras chaves (SECRET_KEY, GEMINI_API_KEY) no painel da Render.
+      - key: key
+        sync: false
 
     buildCommand: "pip install -r requirements.txt"
     preDeployCommand: "flask db upgrade"
     startCommand: "python run.py"
 
   # --- SERVIÇO 2: A IA DO CHATBOT ---
+ services:
   - type: web
-    name: ia-chatbot
+    name: nicopel-chatbot-free
     env: python
-    plan: free
-    region: oregon
-
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --workers 1 --threads 2 --timeout 120 --bind 0.0.0.0:$PORT ia_server:app
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
       - key: key
         sync: false
-
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "gunicorn ia_server:app --timeout 120"
+      - key: PORT
+        value: 10000
+      - key: PYTHONUNBUFFERED
+        value: "1"
+    healthCheck:
+      path: /health
+      interval: 30
+      timeout: 10
+      retries: 3
+    plan: free
+    instanceType: free
+    region: oregon
